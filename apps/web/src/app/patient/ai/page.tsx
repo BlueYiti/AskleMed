@@ -1,18 +1,18 @@
 import Header from "@/components/patient/dashboard-header";
 
-const DoctorsPage = () => {
+const AIPage = () => {
   return (
     <div className="p-8">
       <Header 
-        title={"Doctors"}
-        description={"Find and connect with healthcare professionals 🩺"}
+        title={"AI"}
+        description={"Explore AI-powered features and insights"}
       />
 
       <div className="mt-8">
-        Doctors Page
+        AI Page
       </div>
     </div>
   );
 };
 
-export default DoctorsPage;
+export default AIPage;

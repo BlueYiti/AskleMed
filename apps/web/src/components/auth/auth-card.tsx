@@ -12,9 +12,13 @@ const AuthCard = ({
   children,
 }: AuthCardProps) => {
   return (
-    <main className="min-h-screen bg-slate-50 flex items-center justify-center p-6">
-      <div className="w-full max-w-2xl bg-white rounded-3xl shadow-xl ring-1 ring-slate-200 overflow-hidden">
-        <div className="px-8 py-10">
+    <main className="relative min-h-screen bg-slate-50 flex items-center justify-center p-6">
+      <div className="relative z-10 w-full max-w-2xl overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-2xl">
+        {/* Solid white layer */}
+        <div className="absolute inset-0 bg-white" />
+
+        {/* Content */}
+        <div className="relative px-8 py-10">
           <h1 className="text-3xl font-semibold text-slate-900">
             {title}
           </h1>

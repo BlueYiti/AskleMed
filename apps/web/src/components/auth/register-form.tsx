@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 
 import { authClient } from "@/lib/auth-client";
 
@@ -28,6 +29,7 @@ const initialFormData: RegisterFormData = {
 };
 
 const RegisterForm = () => {
+  const router = useRouter();
   const [formData, setFormData] =
     useState(initialFormData);
 
@@ -99,11 +101,14 @@ const RegisterForm = () => {
 
       setStatus({
         type: "success",
-        message:
-          "Account created successfully. Please verify your email.",
+        message: "Account created successfully. Redirecting to login...",
       });
 
       setFormData(initialFormData);
+
+      setTimeout(() => {
+        router.push("/login");
+      }, 3000); // 3-second delay
 
     } catch (error) {
       console.error(error);
@@ -240,8 +245,8 @@ const RegisterForm = () => {
           "
         >
           {isSubmitting
-            ? "Creating account..."
-            : "Create patient account"}
+            ? "Creating Account..."
+            : "Create Account"}
         </button>
 
         {status && (

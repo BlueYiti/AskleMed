@@ -1,7 +1,27 @@
-export default function LoginPage() {
+// app/login/page.tsx
+
+import AuthCard from "@/components/auth/auth-card";
+
+import LoginForm from "@/components/auth/login-form";
+
+import BackToHomeButton from "@/components/navigation/back-to-home-button";
+
+const LoginPage = () => {
   return (
-    <main className="flex min-h-screen items-center justify-center">
-      <h1 className="text-2xl font-bold">Login Page</h1>
-    </main>
+    <AuthCard
+      title="Welcome Back"
+      description="
+        Sign in to your AskleMed account
+        to manage appointments,
+        access your medical profile,
+        and continue your healthcare journey.
+      "
+    >
+      <BackToHomeButton />
+
+      <LoginForm />
+    </AuthCard>
   );
-}
+};
+
+export default LoginPage;
