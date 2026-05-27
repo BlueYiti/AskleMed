@@ -1,10 +1,18 @@
-﻿import { Router } from 'express'
-import { createPatient, getPatient, listPatients } from './patient.controller.js'
+﻿import { Router } from "express";
+import requireAuth from "../../middleware/require-auth.js";
+import {
+  createPatient,
+  getPatient,
+  listPatients,
+} from "./patient.controller.js";
 
-const router = Router()
+const router = Router();
 
-router.get('/', listPatients)
-router.get('/:id', getPatient)
-router.post('/', createPatient)
+// 🔐 protect everything in this module
+router.use(requireAuth(["patient"]));
 
-export default router
+router.get("/", listPatients);
+router.get("/:id", getPatient);
+router.post("/", createPatient);
+
+export default router;
