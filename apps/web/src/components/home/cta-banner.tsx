@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 export function CtaBanner() {
   return (
     <section id="contact" className="container pb-20 pt-4 md:pb-32">
-      <div className="relative overflow-hidden rounded-[2rem] bg-gradient-to-r from-[#0566bb] to-[#08c7cf] px-6 py-12 shadow-2xl md:rounded-[3rem] md:px-12 md:py-16 lg:px-16">
+      <div className="relative overflow-hidden rounded-[2rem] bg-linear-to-r from-[#0566bb] to-[#08c7cf] px-6 py-12 shadow-2xl md:rounded-[3rem] md:px-12 md:py-16 lg:px-16">
         {/* Background Glow */}
         <div className="absolute inset-0 bg-black/5" />
 
