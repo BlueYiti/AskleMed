@@ -1,4 +1,5 @@
 import Image from "next/image";
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 
@@ -32,8 +33,9 @@ export function HeroSection() {
             <Button
               size="lg"
               className="rounded-full bg-[#0566bb] px-8"
+              asChild
             >
-              Get Started
+              <Link href="/register">Get Started</Link>
             </Button>
 
             <Button
