@@ -1,197 +1,167 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import {
-  CalendarDays,
-  Clock3,
-  FileText,
-  HeartPulse,
-  Stethoscope,
-  Video,
-} from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
 
 import Header from "@/components/layout/header";
 import { authClient } from "@/lib/auth-client";
+import { DashboardData } from "@/types/dashboard";
+import { Appointment } from "@/types/appointment";
+import { User } from "@/types/user";
 
-const stats = [
-  {
-    title: "Upcoming Appointments",
-    value: "3",
-    icon: CalendarDays,
-    color: "bg-blue-100 text-blue-600",
-  },
-  {
-    title: "Consultations",
-    value: "12",
-    icon: Video,
-    color: "bg-violet-100 text-violet-600",
-  },
-  {
-    title: "Medical Records",
-    value: "8",
-    icon: FileText,
-    color: "bg-emerald-100 text-emerald-600",
-  },
-  {
-    title: "Doctors",
-    value: "5",
-    icon: Stethoscope,
-    color: "bg-rose-100 text-rose-600",
-  },
-];
-
-const upcomingAppointments = [
-  {
-    doctor: "Dr. Sarah Williams",
-    specialty: "Cardiologist",
-    date: "May 29, 2026",
-    time: "10:00 AM",
-  },
-  {
-    doctor: "Dr. Michael Reyes",
-    specialty: "Dermatologist",
-    date: "June 1, 2026",
-    time: "2:30 PM",
-  },
-];
+import { HealthTipRotator } from "@/components/patient/dashboard/health-tip-rotator";
+import { PrescriptionRefills } from "@/components/patient/dashboard/prescription-refills";
+import { DashboardHero } from "@/components/patient/dashboard/hero";
+import { DashboardStats } from "@/components/patient/dashboard/stats";
+import { UpcomingAppointments } from "@/components/patient/dashboard/upcoming appointments";
+import { QuickActions } from "@/components/patient/dashboard/quick-actions";
+import {
+  dashboardGradients,
+  dashboardIcons,
+} from "@/components/patient/dashboard/constants";
 
 const PatientDashboardPage = () => {
-  const [user, setUser] = useState<any>(null);
+  const [user, setUser] = useState<User | null>(null);
+
+  const [appointments, setAppointments] = useState<
+    Appointment[]
+  >([]);
+  const [medicalRecordsCount, setMedicalRecordsCount] =
+    useState(0);
+  const [doctorsCount, setDoctorsCount] = useState(0);
+
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchSession = async () => {
+    const fetchDashboard = async () => {
       try {
-        const res = await authClient.getSession();
-        setUser(res?.data?.user ?? null);
+        setLoading(true);
+
+        const session = await authClient.getSession();
+        const currentUser =
+          session?.data?.user ?? null;
+
+        setUser(currentUser);
+
+        const response = await fetch(
+          `${process.env.NEXT_PUBLIC_API_URL}/api/patients/dashboard`,
+          {
+            credentials: "include",
+          }
+        );
+
+        if (!response.ok) {
+          throw new Error(
+            "Failed to fetch dashboard"
+          );
+        }
+
+        const data: DashboardData =
+          await response.json();
+
+        setAppointments(data.appointments);
+        setMedicalRecordsCount(
+          data.medicalRecordsCount
+        );
+        setDoctorsCount(data.doctorsCount);
+      } catch (error) {
+        console.error(error);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchSession();
+    fetchDashboard();
   }, []);
 
+  /**
+   * Derived: upcoming appointments
+   */
+  const upcomingAppointments = useMemo(() => {
+    return appointments
+      .filter(
+        (a) =>
+          a.status === "confirmed" ||
+          a.status === "pending"
+      )
+      .sort(
+        (a, b) =>
+          new Date(a.startsAt).getTime() -
+          new Date(b.startsAt).getTime()
+      );
+  }, [appointments]);
+
+  /**
+   * Stats config (fully declarative now)
+   */
+  const stats = useMemo(() => {
+    return [
+      {
+        title: "Upcoming Appointments",
+        value: upcomingAppointments.length,
+        gradient: dashboardGradients.appointments,
+        icon: dashboardIcons.appointments,
+      },
+      {
+        title: "Consultations",
+        value: appointments.filter(
+          (a) => a.meetingLink
+        ).length,
+        gradient:
+          dashboardGradients.consultations,
+        icon: dashboardIcons.consultations,
+      },
+      {
+        title: "Medical Records",
+        value: medicalRecordsCount,
+        gradient: dashboardGradients.records,
+        icon: dashboardIcons.records,
+      },
+      {
+        title: "Doctors",
+        value: doctorsCount,
+        gradient: dashboardGradients.doctors,
+        icon: dashboardIcons.doctors,
+      },
+    ];
+  }, [
+    upcomingAppointments.length,
+    appointments,
+    medicalRecordsCount,
+    doctorsCount,
+  ]);
+
   return (
-    <div className="space-y-8">
-      {/* Header */}
-      <Header
-        title={"Dashboard"}
-        description={
-          loading
-            ? "Loading..."
-            : `Welcome back ${user?.name ?? ""} 👋`
-        }
-      />
+    <div className="min-h-screen space-y-8 bg-slate-50 p-4 md:p-6">
+      {/* Hero */}
+      <DashboardHero name={user?.name ?? ""} />
 
       {/* Stats */}
-      <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-4">
-        {stats.map((item) => {
-          const Icon = item.icon;
+      <DashboardStats
+        stats={stats}
+        loading={loading}
+      />
 
-          return (
-            <div
-              key={item.title}
-              className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm"
-            >
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-slate-500">
-                    {item.title}
-                  </p>
-
-                  <h2 className="mt-2 text-3xl font-bold text-slate-900">
-                    {item.value}
-                  </h2>
-                </div>
-
-                <div
-                  className={`flex h-14 w-14 items-center justify-center rounded-2xl ${item.color}`}
-                >
-                  <Icon className="h-7 w-7" />
-                </div>
-              </div>
-            </div>
-          );
-        })}
-      </div>
-
-      {/* Main grid */}
+      {/* Main Grid */}
       <div className="grid gap-6 xl:grid-cols-3">
-        {/* Left section */}
+        {/* Appointments */}
         <div className="xl:col-span-2">
-          <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-            {/* Header */}
-            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-              <div>
-                <h2 className="text-xl font-bold text-slate-900">
-                  Upcoming Appointments
-                </h2>
-                <p className="mt-1 text-sm text-slate-500">
-                  Your scheduled consultations.
-                </p>
-              </div>
-
-              <button className="w-fit rounded-xl bg-slate-900 px-4 py-2 text-sm font-medium text-white transition hover:bg-slate-800">
-                Book Appointment
-              </button>
-            </div>
-
-            {/* Appointments */}
-            <div className="mt-6 space-y-4">
-              {upcomingAppointments.map((appointment) => (
-                <div
-                  key={`${appointment.doctor}-${appointment.time}`}
-                  className="flex flex-col gap-4 rounded-2xl border border-slate-200 p-5 md:flex-row md:items-center md:justify-between"
-                >
-                  {/* Doctor info */}
-                  <div className="flex items-start gap-4">
-                    <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-blue-100 text-blue-600">
-                      <HeartPulse className="h-6 w-6" />
-                    </div>
-
-                    <div>
-                      <h3 className="font-semibold text-slate-900">
-                        {appointment.doctor}
-                      </h3>
-                      <p className="text-sm text-slate-500">
-                        {appointment.specialty}
-                      </p>
-                    </div>
-                  </div>
-
-                  {/* Time info */}
-                  <div className="flex flex-col sm:flex-row gap-2 sm:gap-6 text-sm text-slate-600">
-                    <div className="flex items-center gap-2">
-                      <CalendarDays className="h-4 w-4" />
-                      {appointment.date}
-                    </div>
-
-                    <div className="flex items-center gap-2">
-                      <Clock3 className="h-4 w-4" />
-                      {appointment.time}
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
+          <UpcomingAppointments
+            appointments={
+              upcomingAppointments
+            }
+            loading={loading}
+          />
         </div>
 
-        {/* Right section */}
+        {/* Sidebar */}
         <div className="space-y-6">
-          <div className="rounded-3xl bg-slate-900 p-6 text-white shadow-sm">
-            <h2 className="text-xl font-bold">Need Immediate Help?</h2>
-
-            <p className="mt-2 text-sm text-slate-300">
-              Start an instant consultation with an available doctor.
-            </p>
-
-            <button className="mt-5 w-full rounded-xl bg-white px-4 py-3 text-sm font-semibold text-slate-900 transition hover:bg-slate-100">
-              Start Consultation
-            </button>
-          </div>
+          <QuickActions />
         </div>
+      </div>
+      
+      {/* Bottom Section */}
+      <div className="mt-6">
+        <PrescriptionRefills />
       </div>
     </div>
   );

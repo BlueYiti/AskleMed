@@ -4,6 +4,7 @@ import {
   createPatient,
   getPatient,
   listPatients,
+  getPatientDashboard,
 } from "./patient.controller.js";
 
 const router = Router();
@@ -11,6 +12,7 @@ const router = Router();
 // 🔐 protect everything in this module
 router.use(requireAuth(["patient"]));
 
+router.get("/dashboard", getPatientDashboard);
 router.get("/", listPatients);
 router.get("/:id", getPatient);
 router.post("/", createPatient);
