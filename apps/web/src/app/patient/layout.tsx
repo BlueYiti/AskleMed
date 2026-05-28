@@ -1,6 +1,6 @@
 import { ReactNode } from "react";
 
-import Sidebar from "@/components/layout/patient-sidebar";
+import PatientSidebar from "@/components/layout/patient-sidebar";
 
 type PatientLayoutProps = {
   children: ReactNode;
@@ -12,7 +12,7 @@ const PatientLayout = ({
   return (
     <main className="min-h-screen bg-slate-100 flex">
       {/* Sidebar */}
-      <Sidebar />
+      <PatientSidebar />
 
       {/* Page Content */}
       <section className="flex-1 overflow-y-auto">

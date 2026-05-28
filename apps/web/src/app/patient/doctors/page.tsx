@@ -1,4 +1,4 @@
-import Header from "@/components/patient/dashboard-header";
+import Header from "@/components/layout/header";
 
 const DoctorsPage = () => {
   return (
