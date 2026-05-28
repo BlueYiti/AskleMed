@@ -35,7 +35,7 @@ export const validateRegisterForm = (
   // Password validation
   if (!passwordRegex.test(formData.password)) {
     return (
-      "Password must contain uppercase, lowercase, and a number."
+      "Password must be 8+ characters with upper, lower, and a number."
     );
   }
 

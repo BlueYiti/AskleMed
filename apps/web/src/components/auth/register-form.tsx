@@ -39,6 +39,9 @@ const RegisterForm = () => {
   const [isSubmitting, setIsSubmitting] =
     useState(false);
 
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
   const handleChange = (
     event: React.ChangeEvent<HTMLInputElement>
   ) => {
@@ -173,6 +176,7 @@ const RegisterForm = () => {
           autoComplete="tel"
           placeholder="+63 912 345 6789"
           disabled={isSubmitting}
+          maxLength={10}
         />
 
         <div className="md:col-span-2">
@@ -186,37 +190,51 @@ const RegisterForm = () => {
           />
         </div>
 
-        <div>
+        <div className="md:col-span-2 grid gap-6 md:grid-cols-2">
+          <div>
+            <FormInput
+              label="Password"
+              type={showPassword ? "text" : "password"}
+              name="password"
+              value={formData.password}
+              onChange={handleChange}
+              required
+              autoComplete="new-password"
+              placeholder="Create a password"
+              disabled={isSubmitting}
+              rightIcon={
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((prev) => !prev)}
+                  className="text-gray-500 hover:text-gray-700"
+                >
+                  {showPassword ? "🙈" : "👁️"}
+                </button>
+              }
+            />
+          </div>
+
           <FormInput
-            label="Password"
-            type="password"
-            name="password"
-            value={formData.password}
+            label="Confirm password"
+            type={showConfirmPassword ? "text" : "password"}
+            name="confirmPassword"
+            value={formData.confirmPassword}
             onChange={handleChange}
             required
             autoComplete="new-password"
-            placeholder="Create a password"
+            placeholder="Repeat your password"
             disabled={isSubmitting}
+            rightIcon={
+              <button
+                type="button"
+                onClick={() => setShowConfirmPassword((prev) => !prev)}
+                className="text-gray-500 hover:text-gray-700"
+              >
+                {showConfirmPassword ? "🙈" : "👁️"}
+              </button>
+            }
           />
-
-          <div className="mt-3">
-            <PasswordStrength
-              password={formData.password}
-            />
-          </div>
         </div>
-
-        <FormInput
-          label="Confirm password"
-          type="password"
-          name="confirmPassword"
-          value={formData.confirmPassword}
-          onChange={handleChange}
-          required
-          autoComplete="new-password"
-          placeholder="Repeat your password"
-          disabled={isSubmitting}
-        />
       </div>
 
       <div className="space-y-4 pt-4">
