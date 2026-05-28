@@ -1,9 +1,33 @@
-﻿import { Router } from 'express'
-import { createAppointment, listAppointments } from './appointment.controller.js'
+﻿import { Router } from "express";
+import {
+  createAppointment,
+  listAppointments,
+  getMyAppointments,
+  getDoctorAppointments,
+} from "./appointment.controller.js";
 
-const router = Router()
+const router = Router();
 
-router.get('/', listAppointments)
-router.post('/', createAppointment)
+/**
+ * Admin / debug
+ */
+router.get("/", listAppointments);
 
-export default router
+/**
+ * Patient dashboard
+ * GET /appointments/me?email=...
+ */
+router.get("/me", getMyAppointments);
+
+/**
+ * Doctor dashboard
+ * GET /appointments/doctor?email=...
+ */
+router.get("/doctor", getDoctorAppointments);
+
+/**
+ * Create appointment
+ */
+router.post("/", createAppointment);
+
+export default router;

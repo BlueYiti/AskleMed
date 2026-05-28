@@ -1,27 +1,82 @@
-﻿import mongoose, { type Document, type Types } from 'mongoose'
+﻿import mongoose, { type Document } from 'mongoose'
 
 export interface AppointmentDocument extends Document {
-  patient: Types.ObjectId
-  doctor: Types.ObjectId
-  reason: string
+  patientName: string
+  patientEmail: string
+
+  doctorEmail: string
+  doctorName: string
+
   startsAt: Date
   endsAt: Date
-  status: 'confirmed' | 'cancelled' | 'pending'
+
+  status: 'pending' | 'confirmed' | 'completed' | 'cancelled'
+
+  calEventId?: string
+  meetingLink?: string
+
   createdAt: Date
   updatedAt: Date
 }
 
 const appointmentSchema = new mongoose.Schema<AppointmentDocument>(
   {
-    patient: { type: mongoose.Schema.Types.ObjectId, ref: 'Patient', required: true },
-    doctor: { type: mongoose.Schema.Types.ObjectId, ref: 'Doctor', required: true },
-    reason: { type: String, required: true },
-    startsAt: { type: Date, required: true },
-    endsAt: { type: Date, required: true },
-    status: { type: String, enum: ['confirmed', 'cancelled', 'pending'], default: 'pending' },
+    patientName: {
+      type: String,
+      required: true,
+    },
+
+    patientEmail: {
+      type: String,
+      required: true,
+    },
+
+    doctorEmail: {
+      type: String,
+      required: true,
+      index: true,
+    },
+
+    doctorName: {
+      type: String,
+      required: true,
+    },
+
+    startsAt: {
+      type: Date,
+      required: true,
+      index: true,
+    },
+
+    endsAt: {
+      type: Date,
+      required: true,
+    },
+
+    status: {
+      type: String,
+      enum: ['pending', 'confirmed', 'completed', 'cancelled'],
+      default: 'confirmed',
+    },
+
+    calEventId: {
+      type: String,
+      unique: true,
+      sparse: true,
+    },
+
+    meetingLink: {
+      type: String,
+    },
   },
-  { timestamps: true },
+  {
+    timestamps: true,
+  },
 )
 
-const appointmentModel = mongoose.models.Appointment as mongoose.Model<AppointmentDocument> | undefined
-export const AppointmentModel = appointmentModel ?? mongoose.model<AppointmentDocument>('Appointment', appointmentSchema)
+export const AppointmentModel =
+  mongoose.models.Appointment ||
+  mongoose.model<AppointmentDocument>(
+    'Appointment',
+    appointmentSchema,
+  )
