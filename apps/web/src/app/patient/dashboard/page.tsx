@@ -1,3 +1,6 @@
+"use client";
+
+import { useEffect, useState } from "react";
 import {
   CalendarDays,
   Clock3,
@@ -8,6 +11,7 @@ import {
 } from "lucide-react";
 
 import Header from "@/components/layout/header";
+import { authClient } from "@/lib/auth-client";
 
 const stats = [
   {
@@ -51,22 +55,37 @@ const upcomingAppointments = [
   },
 ];
 
-const recentActivities = [
-  "Uploaded blood test results",
-  "Completed consultation with Dr. Sarah Williams",
-  "Booked a new appointment",
-  "Updated medical profile",
-];
-
 const PatientDashboardPage = () => {
+  const [user, setUser] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchSession = async () => {
+      try {
+        const res = await authClient.getSession();
+        setUser(res?.data?.user ?? null);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchSession();
+  }, []);
+
   return (
-    <div className="min-h-screen bg-slate-50 p-8">
+    <div className="space-y-8">
+      {/* Header */}
       <Header
         title={"Dashboard"}
-        description={"Welcome back 👋"}
+        description={
+          loading
+            ? "Loading..."
+            : `Welcome back ${user?.name ?? ""} 👋`
+        }
       />
 
-      <div className="mt-8 grid gap-6 md:grid-cols-2 xl:grid-cols-4">
+      {/* Stats */}
+      <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-4">
         {stats.map((item) => {
           const Icon = item.icon;
 
@@ -97,31 +116,35 @@ const PatientDashboardPage = () => {
         })}
       </div>
 
-      <div className="mt-8 grid gap-6 xl:grid-cols-3">
+      {/* Main grid */}
+      <div className="grid gap-6 xl:grid-cols-3">
+        {/* Left section */}
         <div className="xl:col-span-2">
           <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-            <div className="flex items-center justify-between">
+            {/* Header */}
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
               <div>
                 <h2 className="text-xl font-bold text-slate-900">
                   Upcoming Appointments
                 </h2>
-
                 <p className="mt-1 text-sm text-slate-500">
                   Your scheduled consultations.
                 </p>
               </div>
 
-              <button className="rounded-xl bg-slate-900 px-4 py-2 text-sm font-medium text-white transition hover:bg-slate-800">
+              <button className="w-fit rounded-xl bg-slate-900 px-4 py-2 text-sm font-medium text-white transition hover:bg-slate-800">
                 Book Appointment
               </button>
             </div>
 
+            {/* Appointments */}
             <div className="mt-6 space-y-4">
               {upcomingAppointments.map((appointment) => (
                 <div
                   key={`${appointment.doctor}-${appointment.time}`}
                   className="flex flex-col gap-4 rounded-2xl border border-slate-200 p-5 md:flex-row md:items-center md:justify-between"
                 >
+                  {/* Doctor info */}
                   <div className="flex items-start gap-4">
                     <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-blue-100 text-blue-600">
                       <HeartPulse className="h-6 w-6" />
@@ -131,14 +154,14 @@ const PatientDashboardPage = () => {
                       <h3 className="font-semibold text-slate-900">
                         {appointment.doctor}
                       </h3>
-
                       <p className="text-sm text-slate-500">
                         {appointment.specialty}
                       </p>
                     </div>
                   </div>
 
-                  <div className="flex gap-6 text-sm text-slate-600">
+                  {/* Time info */}
+                  <div className="flex flex-col sm:flex-row gap-2 sm:gap-6 text-sm text-slate-600">
                     <div className="flex items-center gap-2">
                       <CalendarDays className="h-4 w-4" />
                       {appointment.date}
@@ -155,11 +178,10 @@ const PatientDashboardPage = () => {
           </div>
         </div>
 
+        {/* Right section */}
         <div className="space-y-6">
           <div className="rounded-3xl bg-slate-900 p-6 text-white shadow-sm">
-            <h2 className="text-xl font-bold">
-              Need Immediate Help?
-            </h2>
+            <h2 className="text-xl font-bold">Need Immediate Help?</h2>
 
             <p className="mt-2 text-sm text-slate-300">
               Start an instant consultation with an available doctor.

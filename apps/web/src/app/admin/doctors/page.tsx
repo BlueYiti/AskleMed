@@ -2,13 +2,13 @@ import Header from "@/components/layout/header";
 
 const DoctorsPage = () => {
   return (
-    <div className="p-8">
+    <div className="space-y-8">
       <Header 
         title={"Doctors"}
         description={"View and manage doctors"}
       />
 
-      <div className="mt-8">
+      <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
         Doctors Page
       </div>
     </div>
