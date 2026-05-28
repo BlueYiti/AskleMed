@@ -11,6 +11,10 @@ import patientRoutes from './modules/patients/patient.routes.js'
 import userRoutes from './modules/users/user.routes.js'
 import medicalRecordRoutes from './modules/medical-records/medical-record.routes.js'
 
+import webhookRoutes from './modules/webhooks/webhook.routes.js'
+
+import aiRoutes from './modules/ai/ai.route.js'
+
 import errorHandler from './middleware/error-handler.js'
 
 const app = express()
@@ -21,6 +25,9 @@ app.use(
     credentials: true,
   })
 )
+
+app.use(express.json())
+app.use(express.urlencoded({ extended: true }))
 
 app.get('/health', (_req, res) => {
   res.status(200).json({
@@ -35,14 +42,15 @@ app.all('/api/auth/{*any}', async (req, res) => {
   return toNodeHandler(auth)(req, res)
 })
 
-app.use(express.json())
-app.use(express.urlencoded({ extended: true }))
+app.use('/api/ai', aiRoutes)
 
 app.use('/api/doctors', doctorRoutes)
 app.use('/api/appointments', appointmentRoutes)
 app.use('/api/patients', patientRoutes)
 app.use('/api/users', userRoutes)
 app.use('/api/medical-records', medicalRecordRoutes)
+
+app.use('/api/webhooks', webhookRoutes)
 
 app.use(errorHandler)
 
