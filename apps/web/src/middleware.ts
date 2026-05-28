@@ -1,75 +1,37 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
-export async function middleware(
-  req: NextRequest
-) {
-  const cookie = req.headers.get("cookie");
+export function middleware(req: NextRequest) {
+  const { pathname } = req.nextUrl;
 
-  const response = await fetch(
-    `${process.env.NEXT_PUBLIC_API_URL}/api/auth/get-session`,
-    {
-      headers: {
-        cookie: cookie || "",
-      },
-    }
-  );
+  // 🔐 Better Auth session cookie (support multiple possible names)
+  const sessionCookie =
+    req.cookies.get("better-auth.session_token")?.value ||
+    req.cookies.get("__Secure-better-auth.session_token")?.value ||
+    req.cookies.get("better-auth.session")?.value;
 
-  // request failed
-  if (!response.ok) {
-    return NextResponse.redirect(
-      new URL("/login", req.url)
-    );
+  // 🚫 Not logged in → redirect to login
+  if (!sessionCookie) {
+    const loginUrl = new URL("/login", req.url);
+    loginUrl.searchParams.set("next", pathname);
+    return NextResponse.redirect(loginUrl);
   }
 
-  const session = await response.json();
+  // 🔒 Route protection (ONLY gating access, no role checks here)
 
-  // no session
-  if (!session?.user) {
-    return NextResponse.redirect(
-      new URL("/login", req.url)
-    );
-  }
-
-  const pathname = req.nextUrl.pathname;
-
-  // PATIENT
   if (
-    pathname.startsWith("/patient") &&
-    session.user.role !== "patient"
+    pathname.startsWith("/admin") ||
+    pathname.startsWith("/doctor") ||
+    pathname.startsWith("/patient")
   ) {
-    return NextResponse.redirect(
-      new URL("/unauthorized", req.url)
-    );
+    return NextResponse.next();
   }
 
-  // DOCTOR
-  if (
-    pathname.startsWith("/doctor") &&
-    session.user.role !== "doctor"
-  ) {
-    return NextResponse.redirect(
-      new URL("/unauthorized", req.url)
-    );
-  }
-
-  // ADMIN
-  if (
-    pathname.startsWith("/admin") &&
-    session.user.role !== "admin"
-  ) {
-    return NextResponse.redirect(
-      new URL("/unauthorized", req.url)
-    );
-  }
-
+  // 🌐 allow everything else
   return NextResponse.next();
 }
 
+// 📌 Apply middleware only to protected routes
 export const config = {
-  matcher: [
-    "/patient/:path*",
-    "/doctor/:path*",
-    "/admin/:path*",
-  ],
+  matcher: ["/admin/:path*", "/doctor/:path*", "/patient/:path*"],
 };
