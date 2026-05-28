@@ -1,18 +1,18 @@
 import Header from "@/components/layout/header";
 
-const DoctorDashboardPage = () => {
+const ConsultationPage = () => {
   return (
     <div className="p-8">
       <Header 
-        title={"Dashboard"}
-        description={"Welcome back 👋"}
+        title={"Consultation"}
+        description={"Manage your consultations"}
       />
 
       <div className="mt-8">
-        Dashboard Content Here
+        Consultation Page
       </div>
     </div>
   );
 };
 
-export default DoctorDashboardPage;
+export default ConsultationPage;
