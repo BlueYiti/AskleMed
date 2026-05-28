@@ -5,12 +5,14 @@ import { usePathname, useRouter } from "next/navigation";
 import Image from "next/image";
 
 import {
-  LayoutDashboard,
   CalendarDays,
   Stethoscope,
+  Users,
+  Bell,
+  Settings,
+  Activity,
   FileText,
-  User,
-  Bot,
+  Shield,
   LogOut,
   Loader2,
 } from "lucide-react";
@@ -21,38 +23,48 @@ import { authClient } from "@/lib/auth-client";
 
 const links = [
   {
-    label: "Dashboard",
-    href: "/patient/dashboard",
-    icon: LayoutDashboard,
-  },
-  {
-    label: "Doctors",
-    href: "/patient/doctors",
-    icon: Stethoscope,
+    label: "Analytics",
+    href: "/admin/analytics",
+    icon: Activity,
   },
   {
     label: "Appointments",
-    href: "/patient/appointments",
+    href: "/admin/appointments",
     icon: CalendarDays,
   },
   {
-    label: "Records",
-    href: "/patient/records",
+    label: "Consultations",
+    href: "/admin/consultations",
+    icon: Stethoscope,
+  },
+  {
+    label: "Doctors",
+    href: "/admin/doctor",
+    icon: Shield,
+  },
+  {
+    label: "Users",
+    href: "/admin/users",
+    icon: Users,
+  },
+  {
+    label: "Notifications",
+    href: "/admin/notifications",
+    icon: Bell,
+  },
+  {
+    label: "Logs",
+    href: "/admin/logs",
     icon: FileText,
   },
   {
-    label: "AI Assistant",
-    href: "/patient/ai",
-    icon: Bot,
-  },
-  {
-    label: "Profile",
-    href: "/patient/profile",
-    icon: User,
+    label: "Settings",
+    href: "/admin/settings",
+    icon: Settings,
   },
 ];
 
-const PatientSidebar = () => {
+const AdminSidebar = () => {
   const pathname = usePathname();
 
   const router = useRouter();
@@ -80,7 +92,7 @@ const PatientSidebar = () => {
   };
 
   return (
-    <aside className="w-65 h-screen bg-linear-to-b from-blue-500 to-blue-600 rounded-r-[40px] px-6 py-8 flex flex-col text-white shadow-2xl">
+    <aside className="w-65 h-screen bg-linear-to-b from-slate-800 to-slate-900 rounded-r-[40px] px-6 py-8 flex flex-col text-white shadow-2xl">
       {/* Logo */}
       <div className="flex items-center gap-3 mb-12 px-2">
         <Image
@@ -91,12 +103,12 @@ const PatientSidebar = () => {
         />
 
         <div>
-          <p className="text-xs text-blue-100">
+          <p className="text-xs text-slate-300">
             AskliMed
           </p>
 
           <h1 className="font-semibold text-lg">
-            Patient Portal
+            Admin Portal
           </h1>
         </div>
       </div>
@@ -107,7 +119,7 @@ const PatientSidebar = () => {
           const Icon = item.icon;
 
           const isActive =
-            pathname === item.href;
+            pathname.startsWith(item.href);
 
           return (
             <Link
@@ -115,7 +127,7 @@ const PatientSidebar = () => {
               href={item.href}
               className={`flex items-center gap-3 px-4 py-3 rounded-2xl transition-all duration-200 text-sm font-medium ${
                 isActive
-                  ? "bg-white/20 shadow-lg"
+                  ? "bg-white/15 shadow-lg"
                   : "hover:bg-white/10"
               }`}
             >
@@ -149,4 +161,4 @@ const PatientSidebar = () => {
   );
 };
 
-export default PatientSidebar;
+export default AdminSidebar;
