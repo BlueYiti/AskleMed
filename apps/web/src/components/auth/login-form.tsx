@@ -42,27 +42,47 @@ const LoginForm = () => {
     setError("");
 
     try {
-      const { error } =
+      const { data, error } =
         await authClient.signIn.email({
           email: formData.email,
           password: formData.password,
         });
 
       if (error) {
-        setError(
-          error.message ||
-            "Invalid email or password."
-        );
-
+        setError(error.message || "Invalid email or password.");
         return;
       }
 
-      router.push("/patient/dashboard");
+      // 👇 get user role from response
+      const role = data?.user?.role;
+
+      if (!role) {
+        setError("User role not found.");
+        return;
+      }
+
+      // 👇 role-based redirection
+      switch (role) {
+        case "patient":
+          router.push("/patient/dashboard");
+          break;
+
+        case "doctor":
+          router.push("/doctor/dashboard");
+          break;
+
+        case "admin":
+          router.push("/admin/dashboard");
+          break;
+
+        default:
+          router.push("/");
+          break;
+      }
+
       router.refresh();
     } catch (err) {
-      setError(
-        "Something went wrong. Please try again."
-      );
+      setError("Something went wrong. Please try again.");
     } finally {
       setIsLoading(false);
     }
