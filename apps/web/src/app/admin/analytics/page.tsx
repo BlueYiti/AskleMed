@@ -1,18 +1,18 @@
 import Header from "@/components/layout/header";
 
-const UsersPage = () => {
+const AnalyticsPage = () => {
   return (
     <div className="p-8">
       <Header 
-        title={"Users"}
-        description={"Manage user accounts and permissions"}
+        title={"Analytics"}
+        description={"View analytics and reports"}
       />
 
       <div className="mt-8">
-        Users Page
+        Analytics Page
       </div>
     </div>
   );
 };
 
-export default UsersPage;
+export default AnalyticsPage;
