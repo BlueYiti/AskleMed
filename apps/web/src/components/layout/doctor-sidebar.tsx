@@ -9,7 +9,6 @@ import {
   CalendarDays,
   Stethoscope,
   Users,
-  Bell,
   Clock3,
   Settings,
   User,
@@ -28,7 +27,6 @@ const links = [
   { label: "Consultations", href: "/doctor/consultation", icon: Stethoscope },
   { label: "Patients", href: "/doctor/patients", icon: Users },
   { label: "Schedule", href: "/doctor/schedule", icon: Clock3 },
-  { label: "Notifications", href: "/doctor/notifications", icon: Bell },
   { label: "Profile", href: "/doctor/profile", icon: User },
   { label: "Settings", href: "/doctor/settings", icon: Settings },
 ];

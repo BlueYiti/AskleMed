@@ -51,7 +51,7 @@ const ConsultationPage = () => {
       />
 
       {/* Upcoming Consultation */}
-      <section className="rounded-3xl border border-slate-200 bg-gradient-to-br from-slate-900 to-slate-800 p-8 text-white shadow-sm">
+      <section className="rounded-3xl border border-slate-200 bg-linear-to-br from-slate-900 to-slate-800 p-8 text-white shadow-sm">
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
           <div className="space-y-3">
             <div className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-sm">

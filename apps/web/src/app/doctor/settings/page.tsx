@@ -1,18 +1,18 @@
 import Header from "@/components/layout/header";
 
-const PatientsPage = () => {
+const SettingsPage = () => {
   return (
     <div className="space-y-8">
       <Header 
-        title={"Patients"}
-        description={"Manage your patients and their information"}
+        title={"Settings"}
+        description={"Manage your account settings and preferences"}
       />
 
       <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-        Patients Page
+        Settings Page
       </div>
     </div>
   );
 };
 
-export default PatientsPage;
+export default SettingsPage;
