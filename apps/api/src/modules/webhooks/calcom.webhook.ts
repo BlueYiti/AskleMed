@@ -1,33 +1,38 @@
 import type { Request, Response } from 'express'
+
 import { AppointmentModel } from '../appointments/appointment.model.js'
+import { PatientModel } from '../patients/patient.model.js'
 
 export async function calcomWebhook(req: Request, res: Response) {
   try {
     const body = req.body
-    
+
     console.log('🔥 WEBHOOK RECEIVED')
     console.log('Event:', body.triggerEvent)
-    console.log('Payload:', JSON.stringify(body.payload, null, 2))
 
     const event = body.triggerEvent
     const payload = body.payload
 
-    // 1. Handle PING (Cal.com test webhook)
+    /* =========================
+       PING
+    ========================= */
     if (event === 'PING') {
-      console.log('✅ PING received - webhook is working')
-      return res.status(200).json({ success: true, type: 'ping' })
+      return res.status(200).json({
+        success: true,
+        type: 'ping',
+      })
     }
 
-    // 2. Only handle booking creation for now
-    if (event !== 'BOOKING_CREATED') {
-      console.log('⏭ Ignored event:', event)
-      return res.status(200).json({ success: true, ignored: true })
+    const calEventId = payload.uid || payload.bookingId?.toString()
+
+    if (!calEventId) {
+      return res.status(400).json({
+        success: false,
+        error: 'Missing calEventId',
+      })
     }
 
-    // 3. Extract attendee safely (Cal.com format varies)
-    const attendee =
-      payload.attendees?.[0] ||
-      {}
+    const attendee = payload.attendees?.[0] || {}
 
     const name =
       payload.responses?.name?.value ||
@@ -37,36 +42,117 @@ export async function calcomWebhook(req: Request, res: Response) {
     const email =
       payload.responses?.email?.value ||
       attendee.email ||
-      ''
+      null
 
-    // 4. Create appointment
-    const appointment = await AppointmentModel.create({
-      patientName: name,
-      patientEmail: email,
+    const patient = email
+      ? await PatientModel.findOne({ email }).select('_id authId')
+      : null
 
-      doctorName: payload.organizer?.name || 'Doctor',
-      doctorEmail: payload.organizer?.email || '',
+    /* =========================
+       EVENT HANDLING
+    ========================= */
+    switch (event) {
+      /* =========================
+         CREATED
+      ========================= */
+      case 'BOOKING_CREATED': {
+        const existing = await AppointmentModel.findOne({ calEventId })
 
-      calEventId: payload.uid || payload.bookingId?.toString(),
+        if (existing) {
+          return res.status(200).json({
+            success: true,
+            duplicate: true,
+          })
+        }
 
-      startsAt: new Date(payload.startTime),
-      endsAt: new Date(payload.endTime),
+        const appointment = await AppointmentModel.create({
+          patientId: patient?._id || null,
 
-      meetingLink:
-        payload.videoCallData?.url ||
-        payload.metadata?.videoCallUrl ||
-        payload.location ||
-        '',
+          patientName: name,
+          patientEmail: email,
 
-      status: 'confirmed',
-    })
+          doctorName: payload.organizer?.name || 'Doctor',
+          doctorEmail: payload.organizer?.email || '',
 
-    console.log('💾 Appointment saved:', appointment._id)
+          calEventId,
 
-    return res.status(200).json({
-      success: true,
-      appointmentId: appointment._id,
-    })
+          startsAt: new Date(payload.startTime),
+          endsAt: new Date(payload.endTime),
+
+          meetingLink:
+            payload.videoCallData?.url ||
+            payload.metadata?.videoCallUrl ||
+            payload.location ||
+            '',
+
+          status: 'confirmed',
+        })
+
+        return res.status(200).json({
+          success: true,
+          action: 'created',
+          appointmentId: appointment._id,
+        })
+      }
+
+      /* =========================
+         CANCELLED
+      ========================= */
+      case 'BOOKING_CANCELLED': {
+        await AppointmentModel.findOneAndUpdate(
+          { calEventId },
+          { status: 'cancelled' }
+        )
+
+        return res.status(200).json({
+          success: true,
+          action: 'cancelled',
+        })
+      }
+
+      /* =========================
+         RESCHEDULED
+      ========================= */
+      case 'BOOKING_RESCHEDULED': {
+        await AppointmentModel.findOneAndUpdate(
+          { calEventId },
+          {
+            startsAt: new Date(payload.startTime),
+            endsAt: new Date(payload.endTime),
+            status: 'rescheduled',
+          }
+        )
+
+        return res.status(200).json({
+          success: true,
+          action: 'rescheduled',
+        })
+      }
+
+      /* =========================
+         REJECTED
+      ========================= */
+      case 'BOOKING_REJECTED': {
+        await AppointmentModel.findOneAndUpdate(
+          { calEventId },
+          { status: 'rejected' }
+        )
+
+        return res.status(200).json({
+          success: true,
+          action: 'rejected',
+        })
+      }
+
+      /* =========================
+         DEFAULT
+      ========================= */
+      default:
+        return res.status(200).json({
+          success: true,
+          ignored: true,
+        })
+    }
   } catch (error) {
     console.error('❌ Webhook error:', error)
 

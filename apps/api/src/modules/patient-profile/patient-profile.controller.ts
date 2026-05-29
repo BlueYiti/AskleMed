@@ -1,17 +1,32 @@
 ﻿import type { Request, Response } from 'express'
-import { MedicalRecordModel } from './medical-record.model.js'
+
+import { PatientProfileModel } from './patient-profile.model.js'
 
 /* =========================
-   CREATE MEDICAL RECORD
+   CREATE PROFILE
 ========================= */
 
-export const createMedicalRecord = async (req: Request, res: Response) => {
+export const createPatientProfile = async (
+  req: Request,
+  res: Response,
+) => {
   try {
-    const medicalRecord = await MedicalRecordModel.create(req.body)
+    const existingProfile = await PatientProfileModel.findOne({
+      patientId: req.body.patientId,
+    })
+
+    if (existingProfile) {
+      return res.status(400).json({
+        success: false,
+        message: 'Patient profile already exists',
+      })
+    }
+
+    const profile = await PatientProfileModel.create(req.body)
 
     return res.status(201).json({
       success: true,
-      data: medicalRecord,
+      data: profile,
     })
   } catch (error: any) {
     return res.status(500).json({
@@ -22,20 +37,22 @@ export const createMedicalRecord = async (req: Request, res: Response) => {
 }
 
 /* =========================
-   GET ALL MEDICAL RECORDS
+   GET ALL PROFILES
 ========================= */
 
-export const getMedicalRecords = async (_req: Request, res: Response) => {
+export const getPatientProfiles = async (
+  _req: Request,
+  res: Response,
+) => {
   try {
-    const medicalRecords = await MedicalRecordModel.find()
-      .populate('patient')
-      .populate('doctor')
+    const profiles = await PatientProfileModel.find()
+      .populate('patientId')
       .sort({ createdAt: -1 })
 
     return res.status(200).json({
       success: true,
-      count: medicalRecords.length,
-      data: medicalRecords,
+      count: profiles.length,
+      data: profiles,
     })
   } catch (error: any) {
     return res.status(500).json({
@@ -46,25 +63,27 @@ export const getMedicalRecords = async (_req: Request, res: Response) => {
 }
 
 /* =========================
-   GET SINGLE RECORD
+   GET SINGLE PROFILE
 ========================= */
 
-export const getMedicalRecordById = async (req: Request, res: Response) => {
+export const getPatientProfileById = async (
+  req: Request,
+  res: Response,
+) => {
   try {
-    const medicalRecord = await MedicalRecordModel.findById(req.params.id)
-      .populate('patient')
-      .populate('doctor')
+    const profile = await PatientProfileModel.findById(req.params.id)
+      .populate('patientId')
 
-    if (!medicalRecord) {
+    if (!profile) {
       return res.status(404).json({
         success: false,
-        message: 'Medical record not found',
+        message: 'Patient profile not found',
       })
     }
 
     return res.status(200).json({
       success: true,
-      data: medicalRecord,
+      data: profile,
     })
   } catch (error: any) {
     return res.status(500).json({
@@ -75,24 +94,28 @@ export const getMedicalRecordById = async (req: Request, res: Response) => {
 }
 
 /* =========================
-   GET RECORDS BY PATIENT
+   GET PROFILE BY PATIENT ID
 ========================= */
 
-export const getMedicalRecordsByPatient = async (
+export const getPatientProfileByPatientId = async (
   req: Request,
   res: Response,
 ) => {
   try {
-    const records = await MedicalRecordModel.find({
-      patient: req.params.patientId,
-    })
-      .populate('doctor')
-      .sort({ createdAt: -1 })
+    const profile = await PatientProfileModel.findOne({
+      patientId: req.params.patientId,
+    }).populate('patientId')
+
+    if (!profile) {
+      return res.status(404).json({
+        success: false,
+        message: 'Patient profile not found',
+      })
+    }
 
     return res.status(200).json({
       success: true,
-      count: records.length,
-      data: records,
+      data: profile,
     })
   } catch (error: any) {
     return res.status(500).json({
@@ -103,33 +126,33 @@ export const getMedicalRecordsByPatient = async (
 }
 
 /* =========================
-   UPDATE RECORD
+   UPDATE PROFILE
 ========================= */
 
-export const updateMedicalRecord = async (
+export const updatePatientProfile = async (
   req: Request,
   res: Response,
 ) => {
   try {
-    const updatedRecord = await MedicalRecordModel.findByIdAndUpdate(
+    const updatedProfile = await PatientProfileModel.findByIdAndUpdate(
       req.params.id,
       req.body,
       {
         new: true,
         runValidators: true,
       },
-    )
+    ).populate('patientId')
 
-    if (!updatedRecord) {
+    if (!updatedProfile) {
       return res.status(404).json({
         success: false,
-        message: 'Medical record not found',
+        message: 'Patient profile not found',
       })
     }
 
     return res.status(200).json({
       success: true,
-      data: updatedRecord,
+      data: updatedProfile,
     })
   } catch (error: any) {
     return res.status(500).json({
@@ -140,28 +163,28 @@ export const updateMedicalRecord = async (
 }
 
 /* =========================
-   DELETE RECORD
+   DELETE PROFILE
 ========================= */
 
-export const deleteMedicalRecord = async (
+export const deletePatientProfile = async (
   req: Request,
   res: Response,
 ) => {
   try {
-    const deletedRecord = await MedicalRecordModel.findByIdAndDelete(
+    const deletedProfile = await PatientProfileModel.findByIdAndDelete(
       req.params.id,
     )
 
-    if (!deletedRecord) {
+    if (!deletedProfile) {
       return res.status(404).json({
         success: false,
-        message: 'Medical record not found',
+        message: 'Patient profile not found',
       })
     }
 
     return res.status(200).json({
       success: true,
-      message: 'Medical record deleted successfully',
+      message: 'Patient profile deleted successfully',
     })
   } catch (error: any) {
     return res.status(500).json({

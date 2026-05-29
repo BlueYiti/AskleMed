@@ -1,10 +1,36 @@
-﻿import { Router } from 'express'
-import { createMedicalRecord, getMedicalRecord, listMedicalRecords } from './medical-record.controller.js'
+﻿import express from 'express'
 
-const router = Router()
+import {
+  createMedicalRecord,
+  deleteMedicalRecord,
+  getMedicalRecordById,
+  getMedicalRecords,
+  getMedicalRecordsByPatient,
+  updateMedicalRecord,
+} from './medical-record.controller.js'
 
-router.get('/', listMedicalRecords)
-router.get('/:id', getMedicalRecord)
+const router = express.Router()
+
+/* =========================
+   MEDICAL RECORD ROUTES
+========================= */
+
+// CREATE
 router.post('/', createMedicalRecord)
+
+// GET ALL
+router.get('/', getMedicalRecords)
+
+// GET BY PATIENT
+router.get('/patient/:patientId', getMedicalRecordsByPatient)
+
+// GET SINGLE
+router.get('/:id', getMedicalRecordById)
+
+// UPDATE
+router.put('/:id', updateMedicalRecord)
+
+// DELETE
+router.delete('/:id', deleteMedicalRecord)
 
 export default router

@@ -8,6 +8,7 @@ import authRoutes from './modules/auth/auth.routes.js'
 import doctorRoutes from './modules/doctors/doctor.routes.js'
 import appointmentRoutes from './modules/appointments/appointment.routes.js'
 import patientRoutes from './modules/patients/patient.routes.js'
+import patientProfileRoutes from "./modules/patient-profile/patient-profile.routes.js";
 import userRoutes from './modules/users/user.routes.js'
 import medicalRecordRoutes from './modules/medical-records/medical-record.routes.js'
 
@@ -47,6 +48,7 @@ app.use('/api/ai', aiRoutes)
 app.use('/api/doctors', doctorRoutes)
 app.use('/api/appointments', appointmentRoutes)
 app.use('/api/patients', patientRoutes)
+app.use("/patient-profile", patientProfileRoutes);
 app.use('/api/users', userRoutes)
 app.use('/api/medical-records', medicalRecordRoutes)
 

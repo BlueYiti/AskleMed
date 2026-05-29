@@ -1,10 +1,24 @@
+// apps/api/src/modules/auth/auth.controller.ts
+
 import type { Request, Response } from 'express'
 import { fromNodeHeaders } from 'better-auth/node'
 
 import { auth } from '../../lib/auth.js'
-import { UserModel, type UserRole } from '../users/user.model.js'
 
-const allowedRoles = new Set<UserRole>(['patient', 'doctor', 'admin'])
+import {
+  UserModel,
+  type UserRole,
+} from '../users/user.model.js'
+
+import { PatientModel } from '../patients/patient.model.js'
+import { PatientProfileModel } from '../patient-profile/patient-profile.model.js'
+import { MedicalRecordModel } from '../medical-records/medical-record.model.js'
+
+const allowedRoles = new Set<UserRole>([
+  'patient',
+  'doctor',
+  'admin',
+])
 
 type AuthApiResult<T> = {
   headers?: Headers
@@ -21,20 +35,37 @@ type AuthUser = {
   role?: UserRole
 }
 
+type RegisterBody = {
+  name: string
+  email: string
+  password: string
+  role?: UserRole
+
+  phone?: string
+  dateOfBirth?: string
+  insuranceProvider?: string
+}
+
 function roleOrDefault(role: unknown): UserRole {
-  return typeof role === 'string' && allowedRoles.has(role as UserRole)
-    ? role as UserRole
+  return typeof role === 'string' &&
+    allowedRoles.has(role as UserRole)
+    ? (role as UserRole)
     : 'patient'
 }
 
-function applyAuthHeaders(res: Response, headers?: Headers) {
+function applyAuthHeaders(
+  res: Response,
+  headers?: Headers,
+) {
   if (!headers) {
     return
   }
 
-  const getSetCookie = (headers as Headers & {
-    getSetCookie?: () => string[]
-  }).getSetCookie
+  const getSetCookie = (
+    headers as Headers & {
+      getSetCookie?: () => string[]
+    }
+  ).getSetCookie
 
   const setCookies =
     typeof getSetCookie === 'function'
@@ -46,7 +77,10 @@ function applyAuthHeaders(res: Response, headers?: Headers) {
   }
 
   headers.forEach((value, key) => {
-    if (key.toLowerCase() === 'set-cookie' && setCookies.length > 0) {
+    if (
+      key.toLowerCase() === 'set-cookie' &&
+      setCookies.length > 0
+    ) {
       return
     }
 
@@ -65,7 +99,10 @@ function toPublicUser(user: AuthUser) {
   }
 }
 
-function sendAuthError(res: Response, error: unknown) {
+function sendAuthError(
+  res: Response,
+  error: unknown,
+) {
   const status =
     typeof error === 'object' &&
     error !== null &&
@@ -82,82 +119,255 @@ function sendAuthError(res: Response, error: unknown) {
       ? error.message
       : 'Authentication failed'
 
-  return res.status(status).json({ error: message })
+  return res.status(status).json({
+    error: message,
+  })
 }
 
-export async function register(req: Request, res: Response) {
+/* =====================================================
+   REGISTER
+===================================================== */
+
+export async function register(
+  req: Request<{}, {}, RegisterBody>,
+  res: Response,
+) {
   try {
-    const { name, email, password, role } = req.body
+    const {
+      name,
+      email,
+      password,
+      role,
+
+      phone,
+      dateOfBirth,
+      insuranceProvider,
+    } = req.body
 
     if (!name || !email || !password) {
       return res.status(400).json({
-        error: 'name, email, and password are required',
+        error:
+          'name, email, and password are required',
       })
     }
 
-    const authResult = await auth.api.signUpEmail({
-      body: {
-        name,
-        email,
-        password,
-        role: roleOrDefault(role),
-      },
-      headers: fromNodeHeaders(req.headers),
-      returnHeaders: true,
-      returnStatus: true,
-    } as any) as unknown as AuthApiResult<{
-      token: string | null
-      user: AuthUser
-    }>
+    /* =========================
+       CREATE AUTH USER
+    ========================= */
+
+    const authResult =
+      (await auth.api.signUpEmail({
+        body: {
+          name,
+          email,
+          password,
+          role: roleOrDefault(role),
+        },
+
+        headers: fromNodeHeaders(req.headers),
+
+        returnHeaders: true,
+        returnStatus: true,
+      } as any)) as unknown as AuthApiResult<{
+        token: string | null
+        user: AuthUser
+      }>
 
     applyAuthHeaders(res, authResult.headers)
+
+    const authUser = authResult.response.user
+
+    /* =========================
+       CREATE INTERNAL USER
+    ========================= */
+
+    await UserModel.findOneAndUpdate(
+      {
+        authId: authUser.id,
+      },
+      {
+        authId: authUser.id,
+
+        email: authUser.email,
+        name: authUser.name,
+
+        role: roleOrDefault(authUser.role),
+
+        avatar:
+          authUser.image ?? undefined,
+
+        isVerified:
+          authUser.emailVerified,
+
+        isActive: true,
+      },
+      {
+        upsert: true,
+        returnDocument: 'after',
+        setDefaultsOnInsert: true,
+      },
+    )
+
+    /* =========================
+       CREATE PATIENT
+    ========================= */
+
+    const patient =
+      await PatientModel.findOneAndUpdate(
+        {
+          authId: authUser.id,
+        },
+        {
+          authId: authUser.id,
+
+          name: authUser.name,
+          email: authUser.email,
+
+          phone: phone ?? '',
+          dateOfBirth:
+            dateOfBirth ?? null,
+
+          insuranceProvider:
+            insuranceProvider ?? '',
+        },
+        {
+          upsert: true,
+          returnDocument: 'after',
+          setDefaultsOnInsert: true,
+        },
+      )
+
+    if (!patient?._id) {
+      throw new Error(
+        'Failed to create patient',
+      )
+    }
+
+    /* =========================
+       CREATE PATIENT PROFILE
+    ========================= */
+
+    await PatientProfileModel.findOneAndUpdate(
+      {
+        patientId: patient._id,
+      },
+      {
+        patientId: patient._id,
+
+        basicInfo: {
+          firstName: authUser.name,
+
+          email: authUser.email,
+
+          phone: phone ?? '',
+
+          dateOfBirth:
+            dateOfBirth ?? null,
+        },
+
+        healthInfo: {
+          conditions: [],
+          medications: [],
+          allergies: [],
+          surgeries: [],
+          familyHistory: [],
+        },
+
+        emergencyContact: {
+          name: '',
+          phone: '',
+          relationship: '',
+        },
+      },
+      {
+        upsert: true,
+        returnDocument: 'after',
+        setDefaultsOnInsert: true,
+      },
+    )
 
     return res.status(201).json({
       token: authResult.response.token,
-      user: toPublicUser(authResult.response.user),
+
+      user: toPublicUser(
+        authResult.response.user,
+      ),
     })
   } catch (error) {
+    console.error(error)
+
     return sendAuthError(res, error)
   }
 }
 
-export async function login(req: Request, res: Response) {
+/* =====================================================
+   LOGIN
+===================================================== */
+
+export async function login(
+  req: Request,
+  res: Response,
+) {
   try {
-    const { email, password, rememberMe } = req.body
+    const {
+      email,
+      password,
+      rememberMe,
+    } = req.body
 
     if (!email || !password) {
       return res.status(400).json({
-        error: 'email and password are required',
+        error:
+          'email and password are required',
       })
     }
 
-    const authResult = await auth.api.signInEmail({
-      body: {
-        email,
-        password,
-        rememberMe: rememberMe ?? true,
-      },
-      headers: fromNodeHeaders(req.headers),
-      returnHeaders: true,
-      returnStatus: true,
-    } as any) as unknown as AuthApiResult<{
-      redirect: boolean
-      token: string
-      url?: string
-      user: AuthUser
-    }>
+    const authResult =
+      (await auth.api.signInEmail({
+        body: {
+          email,
+          password,
+          rememberMe:
+            rememberMe ?? true,
+        },
 
-    const profile = await UserModel.findOne({
-      authId: authResult.response.user.id,
-    }).lean()
+        headers: fromNodeHeaders(
+          req.headers,
+        ),
 
-    applyAuthHeaders(res, authResult.headers)
+        returnHeaders: true,
+        returnStatus: true,
+      } as any)) as unknown as AuthApiResult<{
+        redirect: boolean
+        token: string
+        url?: string
+        user: AuthUser
+      }>
+
+    const profile =
+      await UserModel.findOne({
+        authId:
+          authResult.response.user.id,
+      }).lean()
+
+    applyAuthHeaders(
+      res,
+      authResult.headers,
+    )
 
     return res.json({
       token: authResult.response.token,
+
       user: {
-        ...toPublicUser(authResult.response.user),
-        role: profile?.role ?? roleOrDefault(authResult.response.user.role),
+        ...toPublicUser(
+          authResult.response.user,
+        ),
+
+        role:
+          profile?.role ??
+          roleOrDefault(
+            authResult.response.user.role,
+          ),
       },
     })
   } catch (error) {
@@ -165,25 +375,47 @@ export async function login(req: Request, res: Response) {
   }
 }
 
-export async function me(req: Request, res: Response) {
+/* =====================================================
+   ME
+===================================================== */
+
+export async function me(
+  req: Request,
+  res: Response,
+) {
   try {
-    const session = await auth.api.getSession({
-      headers: fromNodeHeaders(req.headers),
-    })
+    const session =
+      await auth.api.getSession({
+        headers: fromNodeHeaders(
+          req.headers,
+        ),
+      })
 
     if (!session) {
-      return res.status(401).json({ error: 'Unauthorized' })
+      return res.status(401).json({
+        error: 'Unauthorized',
+      })
     }
 
-    const profile = await UserModel.findOne({
-      authId: session.user.id,
-    }).lean()
+    const profile =
+      await UserModel.findOne({
+        authId: session.user.id,
+      }).lean()
 
     return res.json({
       user: {
-        ...toPublicUser(session.user as AuthUser),
-        role: profile?.role ?? roleOrDefault((session.user as AuthUser).role),
+        ...toPublicUser(
+          session.user as AuthUser,
+        ),
+
+        role:
+          profile?.role ??
+          roleOrDefault(
+            (session.user as AuthUser)
+              .role,
+          ),
       },
+
       session: session.session,
     })
   } catch (error) {
