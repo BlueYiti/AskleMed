@@ -2,13 +2,13 @@ import Header from "@/components/layout/header";
 
 const LogsPage = () => {
   return (
-    <div className="p-8">
+    <div className="space-y-8">
       <Header 
         title={"Logs"}
-        description={"View system logs"}
+        description={"View system logs and monitor application activity"}
       />
 
-      <div className="mt-8">
+      <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
         Logs Page
       </div>
     </div>

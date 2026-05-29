@@ -1,18 +1,18 @@
 import Header from "@/components/layout/header";
 
-const UsersPage = () => {
+const DashboardPage = () => {
   return (
     <div className="space-y-8">
       <Header 
-        title={"Users"}
-        description={"View and manage users"}
+        title={"Dashboard"}
+        description={"View your dashboard and key metrics"}
       />
 
       <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-        Users Page
+        Dashboard Page
       </div>
     </div>
   );
 };
 
-export default UsersPage;
+export default DashboardPage;

@@ -5,12 +5,13 @@ import { usePathname, useRouter } from "next/navigation";
 import Image from "next/image";
 
 import {
+  LayoutDashboard,
+  Activity,
   CalendarDays,
   Stethoscope,
   Users,
   Bell,
   Settings,
-  Activity,
   FileText,
   Shield,
   LogOut,
@@ -21,6 +22,11 @@ import { useState } from "react";
 import { authClient } from "@/lib/auth-client";
 
 const links = [
+  {
+    label: "Dashboard",
+    href: "/admin/dashboard",
+    icon: LayoutDashboard,
+  },
   {
     label: "Analytics",
     href: "/admin/analytics",
@@ -38,7 +44,7 @@ const links = [
   },
   {
     label: "Doctors",
-    href: "/admin/doctor",
+    href: "/admin/doctors",
     icon: Shield,
   },
   {
