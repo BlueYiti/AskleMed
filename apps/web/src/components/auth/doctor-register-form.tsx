@@ -8,25 +8,31 @@ import FormMessage from "@/components/auth/form-message";
 
 import {
   FormStatus,
-  RegisterFormData,
+  DoctorRegisterFormData
 } from "@/types/auth";
 
 import {
   validateRegisterForm,
 } from "@/lib/validations/register";
 
-const initialFormData: RegisterFormData = {
+const initialFormData: DoctorRegisterFormData = {
   fullName: "",
   email: "",
   password: "",
   confirmPassword: "",
   phone: "",
   dateOfBirth: "",
-  insuranceProvider: "",
+
+  // Doctor fields
+  specialization: "",
+  licenseNumber: "",
+  hospital: "",
+  yearsOfExperience: "",
 };
 
-const RegisterForm = () => {
+const DoctorRegisterForm = () => {
   const router = useRouter();
+
   const [formData, setFormData] =
     useState(initialFormData);
 
@@ -36,8 +42,11 @@ const RegisterForm = () => {
   const [isSubmitting, setIsSubmitting] =
     useState(false);
 
-  const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [showPassword, setShowPassword] =
+    useState(false);
+
+  const [showConfirmPassword, setShowConfirmPassword] =
+    useState(false);
 
   const handleChange = (
     event: React.ChangeEvent<HTMLInputElement>
@@ -53,36 +62,36 @@ const RegisterForm = () => {
   const handleSubmit = async (
     event: React.FormEvent<HTMLFormElement>
   ) => {
-    event.preventDefault()
+    event.preventDefault();
 
-    setStatus(null)
+    setStatus(null);
 
     const validationError =
-      validateRegisterForm(formData)
+      validateRegisterForm(formData);
 
     if (validationError) {
       setStatus({
-        type: 'error',
+        type: "error",
         message: validationError,
-      })
+      });
 
-      return
+      return;
     }
 
     try {
-      setIsSubmitting(true)
+      setIsSubmitting(true);
 
       const response = await fetch(
         `${process.env.NEXT_PUBLIC_API_URL}/api/auth/register`,
         {
-          method: 'POST',
+          method: "POST",
 
           headers: {
-            'Content-Type':
-              'application/json',
+            "Content-Type":
+              "application/json",
           },
 
-          credentials: 'include',
+          credentials: "include",
 
           body: JSON.stringify({
             name: formData.fullName,
@@ -94,57 +103,69 @@ const RegisterForm = () => {
             phone:
               formData.phone.replace(
                 /\D/g,
-                '',
+                ""
               ),
 
             dateOfBirth:
               formData.dateOfBirth,
 
-            insuranceProvider:
-              formData.insuranceProvider,
+            // Doctor data
+            specialization:
+              formData.specialization,
 
-            role: 'patient',
+            licenseNumber:
+              formData.licenseNumber,
+
+            hospital:
+              formData.hospital,
+
+            yearsOfExperience:
+              Number(
+                formData.yearsOfExperience
+              ),
+
+            role: "doctor",
           }),
-        },
-      )
+        }
+      );
 
       const result =
-        await response.json()
+        await response.json();
 
       if (!response.ok) {
         setStatus({
-          type: 'error',
+          type: "error",
           message:
             result.error ||
-            'Unable to create account.',
-        })
+            "Unable to create account.",
+        });
 
-        return
+        return;
       }
 
       setStatus({
-        type: 'success',
+        type: "success",
         message:
-          'Account created successfully. Redirecting to login...',
-      })
+          "Doctor account created successfully. Redirecting to login...",
+      });
 
-      setFormData(initialFormData)
+      setFormData(initialFormData);
 
       setTimeout(() => {
-        router.push('/login')
-      }, 3000)
+        router.push("/login");
+      }, 3000);
     } catch (error) {
-      console.error(error)
+      console.error(error);
 
       setStatus({
-        type: 'error',
+        type: "error",
         message:
-          'Registration failed. Please try again.',
-      })
+          "Registration failed. Please try again.",
+      });
     } finally {
-      setIsSubmitting(false)
+      setIsSubmitting(false);
     }
-  }
+  };
 
   return (
     <form
@@ -159,7 +180,7 @@ const RegisterForm = () => {
           onChange={handleChange}
           required
           autoComplete="name"
-          placeholder="Jane Doe"
+          placeholder="Dr. Jane Doe"
           disabled={isSubmitting}
         />
 
@@ -171,7 +192,7 @@ const RegisterForm = () => {
           onChange={handleChange}
           required
           autoComplete="email"
-          placeholder="you@example.com"
+          placeholder="doctor@example.com"
           disabled={isSubmitting}
         />
 
@@ -199,44 +220,90 @@ const RegisterForm = () => {
           maxLength={10}
         />
 
-        <div className="md:col-span-2">
-          <FormInput
-            label="Insurance provider"
-            name="insuranceProvider"
-            value={formData.insuranceProvider}
-            onChange={handleChange}
-            placeholder="Optional"
-            disabled={isSubmitting}
-          />
-        </div>
+        <FormInput
+          label="Specialization"
+          name="specialization"
+          value={formData.specialization}
+          onChange={handleChange}
+          required
+          placeholder="Cardiologist"
+          disabled={isSubmitting}
+        />
+
+        <FormInput
+          label="License number"
+          name="licenseNumber"
+          value={formData.licenseNumber}
+          onChange={handleChange}
+          required
+          placeholder="LIC-123456"
+          disabled={isSubmitting}
+          maxLength={7}
+        />
+
+        <FormInput
+          label="Hospital / Clinic"
+          name="hospital"
+          value={formData.hospital}
+          onChange={handleChange}
+          required
+          placeholder="St. Luke's Medical Center"
+          disabled={isSubmitting}
+        />
+
+        <FormInput
+          label="Years of experience"
+          type="number"
+          name="yearsOfExperience"
+          value={formData.yearsOfExperience}
+          onChange={handleChange}
+          required
+          placeholder="10"
+          disabled={isSubmitting}
+        />
 
         <div className="md:col-span-2 grid gap-6 md:grid-cols-2">
-          <div>
-            <FormInput
-              label="Password"
-              type={showPassword ? "text" : "password"}
-              name="password"
-              value={formData.password}
-              onChange={handleChange}
-              required
-              autoComplete="new-password"
-              placeholder="Create a password"
-              disabled={isSubmitting}
-              rightIcon={
-                <button
-                  type="button"
-                  onClick={() => setShowPassword((prev) => !prev)}
-                  className="text-gray-500 hover:text-gray-700"
-                >
-                  {showPassword ? "🙈" : "👁️"}
-                </button>
-              }
-            />
-          </div>
+          <FormInput
+            label="Password"
+            type={
+              showPassword
+                ? "text"
+                : "password"
+            }
+            name="password"
+            value={formData.password}
+            onChange={handleChange}
+            required
+            autoComplete="new-password"
+            placeholder="Create a password"
+            disabled={isSubmitting}
+            rightIcon={
+              <button
+                type="button"
+                onClick={() =>
+                  setShowPassword(
+                    (prev) => !prev
+                  )
+                }
+                className="
+                  text-gray-500
+                  hover:text-gray-700
+                "
+              >
+                {showPassword
+                  ? "🙈"
+                  : "👁️"}
+              </button>
+            }
+          />
 
           <FormInput
             label="Confirm password"
-            type={showConfirmPassword ? "text" : "password"}
+            type={
+              showConfirmPassword
+                ? "text"
+                : "password"
+            }
             name="confirmPassword"
             value={formData.confirmPassword}
             onChange={handleChange}
@@ -247,10 +314,19 @@ const RegisterForm = () => {
             rightIcon={
               <button
                 type="button"
-                onClick={() => setShowConfirmPassword((prev) => !prev)}
-                className="text-gray-500 hover:text-gray-700"
+                onClick={() =>
+                  setShowConfirmPassword(
+                    (prev) => !prev
+                  )
+                }
+                className="
+                  text-gray-500
+                  hover:text-gray-700
+                "
               >
-                {showConfirmPassword ? "🙈" : "👁️"}
+                {showConfirmPassword
+                  ? "🙈"
+                  : "👁️"}
               </button>
             }
           />
@@ -283,8 +359,8 @@ const RegisterForm = () => {
           "
         >
           {isSubmitting
-            ? "Creating Account..."
-            : "Create Account"}
+            ? "Creating Doctor Account..."
+            : "Create Doctor Account"}
         </button>
 
         {status && (
@@ -298,4 +374,4 @@ const RegisterForm = () => {
   );
 };
 
-export default RegisterForm;
+export default DoctorRegisterForm;
