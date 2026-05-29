@@ -2,7 +2,7 @@
 
 import { use } from "react";
 import Header from "@/components/layout/header";
-import { useConsultations } from "@/hooks/use-consultations";
+import { useAppointments } from "@/hooks/use-appointments";
 
 import AppointmentDoctorCard from "@/components/layout/appointments/details/details-doctor-card";
 import AppointmentScheduleCard from "@/components/layout/appointments/details/schedule-card";
@@ -18,11 +18,11 @@ interface PageProps {
 
 export default function AppointmentDetailsPage({ params }: PageProps) {
   const { appointmentId } = use(params);
-  const { loading, categorized } = useConsultations();
+  const { loading, categorized } = useAppointments();
 
   const appointment = [
     ...categorized.upcoming,
-    ...categorized.completed,
+    ...categorized.done,
     ...categorized.cancelled,
     ...categorized.past,
   ].find((a) => a._id === appointmentId);
