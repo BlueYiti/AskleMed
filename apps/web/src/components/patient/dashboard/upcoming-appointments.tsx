@@ -1,9 +1,9 @@
 import Link from "next/link";
 
 import { Appointment } from "@/types/appointment";
-import { AppointmentCard } from "../appointments/appointment-card";
+import { AppointmentCard } from "../../layout/appointments/appointment-card";
 import { EmptyAppointments } from "./empty-appointments";
-import { AppointmentsSkeleton } from "../appointments/appointments-skeleton";
+import { AppointmentsSkeleton } from "../../layout/appointments/appointments-skeleton";
 
 interface Props {
   appointments: Appointment[];

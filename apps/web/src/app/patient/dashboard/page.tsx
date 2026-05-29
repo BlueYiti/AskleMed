@@ -2,32 +2,27 @@
 
 import { useEffect, useMemo, useState } from "react";
 
-import Header from "@/components/layout/header";
 import { authClient } from "@/lib/auth-client";
+
 import { DashboardData } from "@/types/dashboard";
 import { Appointment } from "@/types/appointment";
 import { User } from "@/types/user";
 
-import { HealthTipRotator } from "@/components/patient/dashboard/health-tip-rotator";
 import { PrescriptionRefills } from "@/components/patient/dashboard/prescription-refills";
 import { DashboardHero } from "@/components/patient/dashboard/hero";
 import { DashboardStats } from "@/components/patient/dashboard/stats";
-import { UpcomingAppointments } from "@/components/patient/dashboard/upcoming appointments";
-import { QuickActions } from "@/components/patient/dashboard/quick-actions";
-import {
-  dashboardGradients,
-  dashboardIcons,
-} from "@/components/patient/dashboard/constants";
+import { UpcomingAppointments } from "@/components/patient/dashboard/upcoming-appointments";
+import { dashboardGradients, dashboardIcons } from "@/components/patient/dashboard/constants";
+import { HealthTipRotator } from "@/components/patient/dashboard/health-tip-rotator";
 
 const PatientDashboardPage = () => {
   const [user, setUser] = useState<User | null>(null);
 
-  const [appointments, setAppointments] = useState<
-    Appointment[]
-  >([]);
-  const [medicalRecordsCount, setMedicalRecordsCount] =
-    useState(0);
+  const [appointments, setAppointments] = useState<Appointment[]>([]);
+  const [medicalRecordsCount, setMedicalRecordsCount] = useState(0);
   const [doctorsCount, setDoctorsCount] = useState(0);
+
+  const [prescriptions, setPrescriptions] = useState<any[]>([]);
 
   const [loading, setLoading] = useState(true);
 
@@ -37,32 +32,48 @@ const PatientDashboardPage = () => {
         setLoading(true);
 
         const session = await authClient.getSession();
-        const currentUser =
-          session?.data?.user ?? null;
+        const currentUser = session?.data?.user ?? null;
 
         setUser(currentUser);
 
-        const response = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL}/api/patients/dashboard`,
-          {
-            credentials: "include",
-          }
-        );
+        const [dashboardRes, prescriptionsRes] = await Promise.all([
+          fetch(
+            `${process.env.NEXT_PUBLIC_API_URL}/api/patients/dashboard`,
+            {
+              credentials: "include",
+            }
+          ),
 
-        if (!response.ok) {
-          throw new Error(
-            "Failed to fetch dashboard"
-          );
+          fetch(
+            `${process.env.NEXT_PUBLIC_API_URL}/api/prescriptions/me`,
+            {
+              credentials: "include",
+            }
+          ),
+        ]);
+
+        if (!dashboardRes.ok) {
+          throw new Error("Failed to fetch dashboard");
         }
 
-        const data: DashboardData =
-          await response.json();
+        const dashboardData: DashboardData =
+          await dashboardRes.json();
 
-        setAppointments(data.appointments);
+        setAppointments(dashboardData.appointments);
         setMedicalRecordsCount(
-          data.medicalRecordsCount
+          dashboardData.medicalRecordsCount
         );
-        setDoctorsCount(data.doctorsCount);
+        setDoctorsCount(dashboardData.doctorsCount);
+
+        // prescriptions
+        if (prescriptionsRes.ok) {
+          const prescriptionsData =
+            await prescriptionsRes.json();
+
+          setPrescriptions(
+            prescriptionsData?.prescriptions ?? []
+          );
+        }
       } catch (error) {
         console.error(error);
       } finally {
@@ -91,7 +102,12 @@ const PatientDashboardPage = () => {
   }, [appointments]);
 
   /**
-   * Stats config (fully declarative now)
+   * Has prescriptions
+   */
+  const hasPrescriptions = prescriptions.length > 0;
+
+  /**
+   * Stats
    */
   const stats = useMemo(() => {
     return [
@@ -106,8 +122,7 @@ const PatientDashboardPage = () => {
         value: appointments.filter(
           (a) => a.meetingLink
         ).length,
-        gradient:
-          dashboardGradients.consultations,
+        gradient: dashboardGradients.consultations,
         icon: dashboardIcons.consultations,
       },
       {
@@ -146,22 +161,36 @@ const PatientDashboardPage = () => {
         {/* Appointments */}
         <div className="xl:col-span-2">
           <UpcomingAppointments
-            appointments={
-              upcomingAppointments
-            }
+            appointments={upcomingAppointments}
             loading={loading}
           />
         </div>
 
         {/* Sidebar */}
         <div className="space-y-6">
-          <QuickActions />
+          <HealthTipRotator />
         </div>
       </div>
-      
+
       {/* Bottom Section */}
       <div className="mt-6">
-        <PrescriptionRefills />
+        {hasPrescriptions ? (
+          <PrescriptionRefills />
+        ) : (
+          <div className="rounded-3xl border border-slate-200 bg-white p-8 text-center shadow-sm">
+            <h3 className="text-lg font-semibold text-slate-900">
+              Prescription Refills
+            </h3>
+
+            <p className="mt-2 text-sm text-slate-500">
+              No active prescriptions available.
+            </p>
+
+            <div className="mt-4 inline-flex cursor-not-allowed items-center rounded-xl bg-slate-100 px-4 py-2 text-sm font-medium text-slate-400">
+              Refills Unavailable
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

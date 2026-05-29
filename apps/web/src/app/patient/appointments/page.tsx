@@ -6,14 +6,14 @@ import { format, isSameDay } from 'date-fns'
 
 import Header from '@/components/layout/header'
 import { useAppointments, TABS, type Tab } from '@/hooks/use-appointments'
-import { SimpleCalendar } from '@/components/patient/appointments/simple-calendar'
-import { AppointmentCard } from '@/components/patient/appointments/appointment-card'
-import { SummaryCard } from '@/components/patient/appointments/summary-card'
+import { SimpleCalendar } from '@/components/layout/appointments/simple-calendar'
+import { AppointmentCard } from '@/components/layout/appointments/appointment-card'
+import { SummaryCard } from '@/components/layout/appointments/summary-card'
 
 export default function AppointmentsPage() {
   const { loading, categorized, appointmentDates } = useAppointments()
   const [activeTab, setActiveTab] = useState<Tab>('upcoming')
-  const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date())
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined)
 
   const filteredAppointments = useMemo(() => {
     const items = categorized[activeTab]

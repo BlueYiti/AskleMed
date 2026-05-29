@@ -7,7 +7,6 @@ import { authClient } from "@/lib/auth-client";
 
 import FormInput from "@/components/forms/form-input";
 import FormMessage from "@/components/auth/form-message";
-import PasswordStrength from "@/components/auth/password-strength";
 
 import {
   FormStatus,
@@ -56,75 +55,98 @@ const RegisterForm = () => {
   const handleSubmit = async (
     event: React.FormEvent<HTMLFormElement>
   ) => {
-    event.preventDefault();
+    event.preventDefault()
 
-    setStatus(null);
+    setStatus(null)
 
     const validationError =
-      validateRegisterForm(formData);
+      validateRegisterForm(formData)
 
     if (validationError) {
       setStatus({
-        type: "error",
+        type: 'error',
         message: validationError,
-      });
+      })
 
-      return;
+      return
     }
 
     try {
-      setIsSubmitting(true);
+      setIsSubmitting(true)
 
-      const result =
-        await authClient.signUp.email({
-          email: formData.email,
-          password: formData.password,
-          name: formData.fullName,
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/api/auth/register`,
+        {
+          method: 'POST',
 
-          data: {
-            phone: formData.phone.replace(/\D/g, ""),
+          headers: {
+            'Content-Type':
+              'application/json',
+          },
+
+          credentials: 'include',
+
+          body: JSON.stringify({
+            name: formData.fullName,
+
+            email: formData.email,
+
+            password: formData.password,
+
+            phone:
+              formData.phone.replace(
+                /\D/g,
+                '',
+              ),
+
             dateOfBirth:
               formData.dateOfBirth,
+
             insuranceProvider:
               formData.insuranceProvider,
-            role: "patient",
-          },
-        });
 
-      if (result.error) {
+            role: 'patient',
+          }),
+        },
+      )
+
+      const result =
+        await response.json()
+
+      if (!response.ok) {
         setStatus({
-          type: "error",
+          type: 'error',
           message:
-            result.error.message ||
-            "Unable to create account.",
-        });
+            result.error ||
+            'Unable to create account.',
+        })
 
-        return;
+        return
       }
 
       setStatus({
-        type: "success",
-        message: "Account created successfully. Redirecting to login...",
-      });
+        type: 'success',
+        message:
+          'Account created successfully. Redirecting to login...',
+      })
 
-      setFormData(initialFormData);
+      setFormData(initialFormData)
 
       setTimeout(() => {
-        router.push("/login");
-      }, 3000); // 3-second delay
-
+        router.push('/login')
+      }, 3000)
     } catch (error) {
-      console.error(error);
+      console.error(error)
 
       setStatus({
-        type: "error",
+        type: 'error',
         message:
-          "Registration failed. Please try again.",
-      });
+          'Registration failed. Please try again.',
+      })
     } finally {
-      setIsSubmitting(false);
+      setIsSubmitting(false)
     }
-  };
+  }
 
   return (
     <form
