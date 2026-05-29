@@ -1,5 +1,6 @@
 ﻿import type { Request, Response } from 'express'
 import { AppointmentModel } from './appointment.model.js'
+import { DoctorModel } from '../doctors/doctor.model.js'
 import { auth } from '../../lib/auth.js'
 
 /**
@@ -113,15 +114,137 @@ export async function getMyAppointments(
     // ✅ Find appointments belonging to logged-in patient
     const appointments = await AppointmentModel.find({
       patientEmail: user.email,
-    }).sort({ startsAt: -1 })
+    })
+      .sort({ startsAt: -1 })
+      .lean()
+
+    const appointmentsWithDoctor = await Promise.all(
+      appointments.map(async (appointment) => {
+
+        const doctor = await DoctorModel.findOne({
+          email: appointment.doctorEmail,
+        }).lean()
+
+        return {
+          _id: appointment._id,
+
+          patientName: appointment.patientName,
+          patientEmail: appointment.patientEmail,
+
+          doctorName: appointment.doctorName,
+          doctorEmail: appointment.doctorEmail,
+
+          startsAt: appointment.startsAt,
+          endsAt: appointment.endsAt,
+
+          status: appointment.status,
+          meetingLink: appointment.meetingLink,
+          reason: appointment.reason,
+
+          doctorPhotoUrl:
+            doctor?.photoUrl || null,
+        }
+      })
+    )
 
     return res.json({
       success: true,
-      count: appointments.length,
-      appointments,
+      count: appointmentsWithDoctor.length,
+      appointments: appointmentsWithDoctor,
     })
   } catch (error) {
     console.error('❌ getMyAppointments error:', error)
+
+    return res.status(500).json({
+      error: 'Server error',
+    })
+  }
+}
+
+/**
+ * GET SINGLE APPOINTMENT
+ */
+export async function getAppointmentById(
+  req: Request,
+  res: Response
+) {
+  try {
+    const session = await auth.api.getSession({
+      headers: req.headers,
+    })
+
+    const user = session?.user
+
+    if (!user?.email) {
+      return res.status(401).json({
+        error: 'Unauthorized',
+      })
+    }
+
+    const { appointmentId } = req.params
+
+    const appointment =
+      await AppointmentModel.findById(
+        appointmentId
+      ).lean()
+
+    if (!appointment) {
+      return res.status(404).json({
+        error: 'Appointment not found',
+      })
+    }
+
+    /**
+     * SECURITY:
+     * Only owner patient OR doctor can view
+     */
+    AppointmentModel.findOne({
+      _id: appointmentId,
+      $or: [
+        { patientEmail: user.email },
+        { doctorEmail: user.email }
+      ]
+    })
+
+    if (!isPatient && !isDoctor) {
+      return res.status(403).json({
+        error: 'Forbidden',
+      })
+    }
+
+    const doctor = await DoctorModel.findOne({
+      email: appointment.doctorEmail,
+    }).lean()
+
+    return res.json({
+      _id: appointment._id,
+
+      patientName: appointment.patientName,
+      patientEmail: appointment.patientEmail,
+
+      doctorName: appointment.doctorName,
+      doctorEmail: appointment.doctorEmail,
+
+      startsAt: appointment.startsAt,
+      endsAt: appointment.endsAt,
+
+      status: appointment.status,
+
+      meetingLink: appointment.meetingLink,
+
+      reason: appointment.reason,
+
+      createdAt: appointment.createdAt,
+      updatedAt: appointment.updatedAt,
+
+      doctorPhotoUrl:
+        doctor?.photoUrl || null,
+    })
+  } catch (error) {
+    console.error(
+      '❌ getAppointmentById error:',
+      error
+    )
 
     return res.status(500).json({
       error: 'Server error',

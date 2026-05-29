@@ -3,6 +3,7 @@ import {
   createAppointment,
   listAppointments,
   getMyAppointments,
+  getAppointmentById,
   getDoctorAppointments,
 } from "./appointment.controller.js";
 
@@ -15,15 +16,18 @@ router.get("/", listAppointments);
 
 /**
  * Patient dashboard
- * GET /appointments/me?email=...
  */
 router.get("/me", getMyAppointments);
 
 /**
  * Doctor dashboard
- * GET /appointments/doctor?email=...
  */
 router.get("/doctor", getDoctorAppointments);
+
+/**
+ * Get single appointment (FIXED)
+ */
+router.get("/:appointmentId", getAppointmentById);
 
 /**
  * Create appointment

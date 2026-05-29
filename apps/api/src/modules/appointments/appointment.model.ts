@@ -14,6 +14,7 @@ export interface AppointmentDocument extends Document {
 
   calEventId?: string
   meetingLink?: string
+  reason: string
 
   createdAt: Date
   updatedAt: Date
@@ -67,6 +68,11 @@ const appointmentSchema = new mongoose.Schema<AppointmentDocument>(
 
     meetingLink: {
       type: String,
+    },
+
+    reason: {
+      type: String,
+      default: '',
     },
   },
   {

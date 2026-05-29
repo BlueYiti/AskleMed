@@ -1,5 +1,12 @@
-import { useState } from 'react'
-import { format, isSameDay, isSameMonth, addMonths, subMonths } from 'date-fns'
+import { useEffect, useMemo, useState } from 'react'
+import {
+  format,
+  isSameDay,
+  isSameMonth,
+  addMonths,
+  subMonths,
+  startOfDay,
+} from 'date-fns'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 
 const WEEKDAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
@@ -10,8 +17,36 @@ interface Props {
   appointmentDates: Date[]
 }
 
-export function SimpleCalendar({ selectedDate, onSelectDate, appointmentDates }: Props) {
-  const [viewDate, setViewDate] = useState(new Date())
+export function SimpleCalendar({
+  selectedDate,
+  onSelectDate,
+  appointmentDates,
+}: Props) {
+  const today = startOfDay(new Date())
+
+  // Find nearest upcoming appointment
+  const nearestUpcomingAppointment = useMemo(() => {
+    return appointmentDates
+      .filter((date) => startOfDay(date) >= today)
+      .sort((a, b) => a.getTime() - b.getTime())[0]
+  }, [appointmentDates, today])
+
+  // Default calendar month
+  const [viewDate, setViewDate] = useState(
+    nearestUpcomingAppointment || new Date()
+  )
+
+  // Auto jump if appointments load later
+  useEffect(() => {
+    if (nearestUpcomingAppointment) {
+      setViewDate(nearestUpcomingAppointment)
+
+      // Optional: auto select nearest appointment
+      if (!selectedDate) {
+        onSelectDate(nearestUpcomingAppointment)
+      }
+    }
+  }, [nearestUpcomingAppointment])
 
   const year = viewDate.getFullYear()
   const month = viewDate.getMonth()
@@ -21,15 +56,17 @@ export function SimpleCalendar({ selectedDate, onSelectDate, appointmentDates }:
 
   const days: (Date | null)[] = [
     ...Array(firstDay).fill(null),
-    ...Array.from({ length: daysInMonth }, (_, i) => new Date(year, month, i + 1)),
+    ...Array.from(
+      { length: daysInMonth },
+      (_, i) => new Date(year, month, i + 1)
+    ),
   ]
 
-  const today = new Date()
   const isCurrentMonth = isSameMonth(viewDate, today)
 
   return (
     <div>
-      {/* Month header with navigation */}
+      {/* Month header */}
       <div className="flex items-center justify-between mb-4">
         <button
           onClick={() => setViewDate((d) => subMonths(d, 1))}
@@ -41,6 +78,7 @@ export function SimpleCalendar({ selectedDate, onSelectDate, appointmentDates }:
 
         <span className="text-sm font-medium">
           {format(viewDate, 'MMMM yyyy')}
+
           {isCurrentMonth && (
             <span className="ml-1.5 text-xs text-muted-foreground font-normal">
               (this month)
@@ -57,18 +95,25 @@ export function SimpleCalendar({ selectedDate, onSelectDate, appointmentDates }:
         </button>
       </div>
 
-      {/* Weekday labels */}
+      {/* Weekdays */}
       <div className="grid grid-cols-7 gap-2 text-center text-xs text-muted-foreground mb-2">
-        {WEEKDAYS.map((d) => <div key={d}>{d}</div>)}
+        {WEEKDAYS.map((d) => (
+          <div key={d}>{d}</div>
+        ))}
       </div>
 
-      {/* Day grid */}
+      {/* Calendar */}
       <div className="grid grid-cols-7 gap-2">
         {days.map((date, i) => {
           if (!date) return <div key={i} className="aspect-square" />
 
-          const hasAppointment = appointmentDates.some((d) => isSameDay(d, date))
-          const isSelected = selectedDate && isSameDay(selectedDate, date)
+          const hasAppointment = appointmentDates.some((d) =>
+            isSameDay(d, date)
+          )
+
+          const isSelected =
+            selectedDate && isSameDay(selectedDate, date)
+
           const isToday = isSameDay(date, today)
 
           return (
@@ -84,10 +129,13 @@ export function SimpleCalendar({ selectedDate, onSelectDate, appointmentDates }:
               }`}
             >
               {date.getDate()}
+
               {hasAppointment && (
                 <div
                   className={`absolute bottom-1 left-1/2 -translate-x-1/2 w-1.5 h-1.5 rounded-full ${
-                    isSelected ? 'bg-primary-foreground' : 'bg-primary'
+                    isSelected
+                      ? 'bg-primary-foreground'
+                      : 'bg-primary'
                   }`}
                 />
               )}

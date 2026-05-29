@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { format } from "date-fns";
 import {
   CalendarDays,
@@ -16,8 +17,24 @@ interface Props {
 export function AppointmentCard({
   appointment,
 }: Props) {
-  const isConfirmed =
-    appointment.status === "confirmed";
+
+  console.log(
+    "doctorPhotoUrl:",
+    appointment.doctorPhotoUrl
+  );
+
+  const statusStyles: Record<
+    Appointment["status"],
+    string
+  > = {
+    confirmed:
+      "bg-emerald-100 text-emerald-700",
+    pending:
+      "bg-amber-100 text-amber-700",
+    cancelled:
+      "bg-red-100 text-red-700",
+    done: "bg-slate-200 text-slate-700",
+  };
 
   return (
     <div
@@ -30,14 +47,27 @@ export function AppointmentCard({
       "
     >
       <div className="flex flex-col gap-6">
-        {/* Top section */}
+        {/* TOP SECTION */}
         <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
-          {/* Doctor info */}
+          {/* DOCTOR INFO */}
           <div className="flex items-start gap-4">
-            <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-blue-100 text-blue-600">
-              <HeartPulse className="h-7 w-7" />
+            {/* AVATAR */}
+            <div className="relative h-14 w-14 overflow-hidden rounded-2xl border border-slate-200 bg-slate-100">
+              {appointment.doctorPhotoUrl ? (
+                <Image
+                  src={appointment.doctorPhotoUrl}
+                  alt={appointment.doctorName}
+                  fill
+                  className="object-cover"
+                />
+              ) : (
+                <div className="flex h-full w-full items-center justify-center bg-blue-100 text-blue-600">
+                  <HeartPulse className="h-7 w-7" />
+                </div>
+              )}
             </div>
 
+            {/* DETAILS */}
             <div>
               <div className="flex flex-wrap items-center gap-3">
                 <h2 className="text-xl font-semibold text-slate-900">
@@ -46,11 +76,12 @@ export function AppointmentCard({
 
                 <span
                   className={`
-                    rounded-full px-3 py-1 text-xs font-semibold capitalize
+                    rounded-full px-3 py-1
+                    text-xs font-semibold capitalize
                     ${
-                      isConfirmed
-                        ? "bg-emerald-100 text-emerald-700"
-                        : "bg-amber-100 text-amber-700"
+                      statusStyles[
+                        appointment.status
+                      ]
                     }
                   `}
                 >
@@ -58,7 +89,12 @@ export function AppointmentCard({
                 </span>
               </div>
 
+              <p className="mt-1 text-sm text-slate-500">
+                {appointment.doctorEmail}
+              </p>
+
               <div className="mt-4 flex flex-col gap-3 text-sm text-slate-600 sm:flex-row sm:flex-wrap sm:gap-6">
+                {/* DATE */}
                 <div className="flex items-center gap-2">
                   <CalendarDays className="h-4 w-4" />
 
@@ -68,6 +104,7 @@ export function AppointmentCard({
                   )}
                 </div>
 
+                {/* TIME */}
                 <div className="flex items-center gap-2">
                   <Clock3 className="h-4 w-4" />
 
@@ -85,30 +122,35 @@ export function AppointmentCard({
             </div>
           </div>
 
-          {/* Actions */}
+          {/* ACTIONS */}
           <div className="flex flex-wrap gap-3">
-            {appointment.meetingLink && (
-              <a
-                href={appointment.meetingLink}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="
-                  inline-flex items-center gap-2 rounded-2xl
-                  bg-blue-600 px-4 py-2 text-sm font-medium
-                  text-white transition hover:bg-blue-700
-                "
-              >
-                <Video className="h-4 w-4" />
-                Join Call
-              </a>
-            )}
+            {appointment.meetingLink &&
+              appointment.status ===
+                "confirmed" && (
+                <a
+                  href={appointment.meetingLink}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="
+                    inline-flex items-center gap-2
+                    rounded-2xl bg-blue-600
+                    px-4 py-2 text-sm font-medium
+                    text-white transition
+                    hover:bg-blue-700
+                  "
+                >
+                  <Video className="h-4 w-4" />
+                  Join Call
+                </a>
+              )}
 
             <Link
               href={`/patient/appointments/${appointment._id}`}
               className="
                 rounded-2xl border border-slate-200
-                bg-white px-4 py-2 text-sm font-medium
-                transition hover:bg-slate-50
+                bg-white px-4 py-2
+                text-sm font-medium transition
+                hover:bg-slate-50
               "
             >
               View Details
@@ -116,7 +158,7 @@ export function AppointmentCard({
           </div>
         </div>
 
-        {/* Reason */}
+        {/* REASON */}
         {appointment.reason && (
           <div className="rounded-2xl border border-slate-100 bg-slate-50/70 p-4">
             <p className="text-sm font-semibold text-slate-900">
