@@ -12,7 +12,7 @@ import {
 
 import { PatientModel } from '../patients/patient.model.js'
 import { PatientProfileModel } from '../patient-profile/patient-profile.model.js'
-import { MedicalRecordModel } from '../medical-records/medical-record.model.js'
+import { DoctorModel } from '../doctors/doctor.model.js'
 
 const allowedRoles = new Set<UserRole>([
   'patient',
@@ -41,9 +41,16 @@ type RegisterBody = {
   password: string
   role?: UserRole
 
+  // Patient
   phone?: string
   dateOfBirth?: string
   insuranceProvider?: string
+
+  // Doctor
+  specialization?: string
+  licenseNumber?: string
+  hospital?: string
+  yearsOfExperience?: number
 }
 
 function roleOrDefault(role: unknown): UserRole {
@@ -139,9 +146,16 @@ export async function register(
       password,
       role,
 
+      // Patient
       phone,
       dateOfBirth,
       insuranceProvider,
+
+      // Doctor
+      specialization,
+      licenseNumber,
+      hospital,
+      yearsOfExperience,
     } = req.body
 
     if (!name || !email || !password) {
@@ -208,12 +222,91 @@ export async function register(
       },
     )
 
+    const userRole =
+      roleOrDefault(authUser.role);
+
     /* =========================
-       CREATE PATIENT
+      PATIENT
     ========================= */
 
-    const patient =
-      await PatientModel.findOneAndUpdate(
+    if (userRole === "patient") {
+      const patient =
+        await PatientModel.findOneAndUpdate(
+          {
+            authId: authUser.id,
+          },
+          {
+            authId: authUser.id,
+
+            name: authUser.name,
+            email: authUser.email,
+
+            phone: phone ?? "",
+            dateOfBirth:
+              dateOfBirth ?? null,
+
+            insuranceProvider:
+              insuranceProvider ?? "",
+          },
+          {
+            upsert: true,
+            returnDocument: "after",
+            setDefaultsOnInsert: true,
+          },
+        );
+
+      if (!patient?._id) {
+        throw new Error(
+          "Failed to create patient",
+        );
+      }
+
+      await PatientProfileModel.findOneAndUpdate(
+        {
+          patientId: patient._id,
+        },
+        {
+          patientId: patient._id,
+
+          basicInfo: {
+            firstName: authUser.name,
+
+            email: authUser.email,
+
+            phone: phone ?? "",
+
+            dateOfBirth:
+              dateOfBirth ?? null,
+          },
+
+          healthInfo: {
+            conditions: [],
+            medications: [],
+            allergies: [],
+            surgeries: [],
+            familyHistory: [],
+          },
+
+          emergencyContact: {
+            name: "",
+            phone: "",
+            relationship: "",
+          },
+        },
+        {
+          upsert: true,
+          returnDocument: "after",
+          setDefaultsOnInsert: true,
+        },
+      );
+    }
+
+    /* =========================
+      DOCTOR
+    ========================= */
+
+    if (userRole === "doctor") {
+      await DoctorModel.findOneAndUpdate(
         {
           authId: authUser.id,
         },
@@ -223,68 +316,27 @@ export async function register(
           name: authUser.name,
           email: authUser.email,
 
-          phone: phone ?? '',
-          dateOfBirth:
-            dateOfBirth ?? null,
+          phone: phone ?? "",
 
-          insuranceProvider:
-            insuranceProvider ?? '',
+          specialization:
+            specialization ?? "",
+
+          licenseNumber:
+            licenseNumber ?? "",
+
+          clinicName:
+            hospital ?? "",
+
+          experienceYears:
+            yearsOfExperience ?? 0,
         },
         {
           upsert: true,
-          returnDocument: 'after',
+          returnDocument: "after",
           setDefaultsOnInsert: true,
         },
-      )
-
-    if (!patient?._id) {
-      throw new Error(
-        'Failed to create patient',
-      )
+      );
     }
-
-    /* =========================
-       CREATE PATIENT PROFILE
-    ========================= */
-
-    await PatientProfileModel.findOneAndUpdate(
-      {
-        patientId: patient._id,
-      },
-      {
-        patientId: patient._id,
-
-        basicInfo: {
-          firstName: authUser.name,
-
-          email: authUser.email,
-
-          phone: phone ?? '',
-
-          dateOfBirth:
-            dateOfBirth ?? null,
-        },
-
-        healthInfo: {
-          conditions: [],
-          medications: [],
-          allergies: [],
-          surgeries: [],
-          familyHistory: [],
-        },
-
-        emergencyContact: {
-          name: '',
-          phone: '',
-          relationship: '',
-        },
-      },
-      {
-        upsert: true,
-        returnDocument: 'after',
-        setDefaultsOnInsert: true,
-      },
-    )
 
     return res.status(201).json({
       token: authResult.response.token,

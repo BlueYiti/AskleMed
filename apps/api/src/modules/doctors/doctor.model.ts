@@ -1,23 +1,41 @@
-﻿import mongoose, { type Document, type Model } from "mongoose";
-import { SPECIALIZATION_KEYS } from '../../types/specializations.js';
+﻿import mongoose, {
+  type Document,
+  type Model,
+} from "mongoose";
 
-export interface DoctorDocument extends Document {
+import {
+  SPECIALIZATION_KEYS,
+} from "../../types/specializations.js";
+
+export interface DoctorDocument
+  extends Document {
+  authId: string;
+
   name: string;
   email: string;
-  calLink: string;
 
-  specialization: (typeof SPECIALIZATION_KEYS)[number];
+  specialization:
+    (typeof SPECIALIZATION_KEYS)[number];
+
+  licenseNumber: string;
+
   experienceYears: number;
+
   photoUrl: string;
 
   bio?: string;
 
+  calLink: string;
+
   consultationTypes: string[];
+
   consultationFee?: number;
 
   availability: {
     isAvailableToday: boolean;
+
     nextSlot?: Date;
+
     schedule?: {
       day:
         | "Monday"
@@ -27,136 +45,213 @@ export interface DoctorDocument extends Document {
         | "Friday"
         | "Saturday"
         | "Sunday";
+
       startTime: string;
       endTime: string;
     }[];
   };
 
   clinicName?: string;
+
   clinicAddress?: string;
 
   languages?: string[];
 
   phone?: string;
 
+  isVerified: boolean;
+
   createdAt: Date;
   updatedAt: Date;
 }
 
-const doctorSchema = new mongoose.Schema<DoctorDocument>(
-  {
-    name: {
-      type: String,
-      required: true,
-      trim: true,
-    },
+const doctorSchema =
+  new mongoose.Schema<DoctorDocument>(
+    {
+      /* =========================
+         AUTH LINK
+      ========================= */
 
-    email: {
-      type: String,
-      required: true,
-      unique: true,
-      lowercase: true,
-      trim: true,
-    },
+      authId: {
+        type: String,
+        required: true,
+        unique: true,
+        index: true,
+      },
 
-    specialization: {
-      type: String,
-      enum: SPECIALIZATION_KEYS,
-      required: true,
-      index: true
-    },
+      /* =========================
+         BASIC INFO
+      ========================= */
 
-    experienceYears: {
-      type: Number,
-      default: 0,
-      min: 0,
-    },
+      name: {
+        type: String,
+        required: true,
+        trim: true,
+      },
 
-    photoUrl: {
-      type: String,
-      default: "/images/default-doctor.png",
-    },
+      email: {
+        type: String,
+        required: true,
+        unique: true,
+        lowercase: true,
+        trim: true,
+      },
 
-    calLink: {
-      type: String,
-      default: "",
-    },
+      phone: {
+        type: String,
+        default: "",
+      },
 
-    bio: {
-      type: String,
-      default: "",
-    },
+      photoUrl: {
+        type: String,
+        default:
+          "/images/default-doctor.png",
+      },
 
-    consultationTypes: {
-      type: [String],
-      default: [],
-    },
+      bio: {
+        type: String,
+        default: "",
+      },
 
-    consultationFee: {
-      type: Number,
-      default: 0,
-    },
+      /* =========================
+         PROFESSIONAL INFO
+      ========================= */
 
-    availability: {
-      isAvailableToday: {
+      specialization: {
+        type: String,
+        enum: SPECIALIZATION_KEYS,
+        required: true,
+        index: true,
+      },
+
+      licenseNumber: {
+        type: String,
+        required: true,
+        unique: true,
+        trim: true,
+      },
+
+      experienceYears: {
+        type: Number,
+        default: 0,
+        min: 0,
+      },
+
+      isVerified: {
         type: Boolean,
-        default: true,
+        default: false,
       },
-      nextSlot: {
-        type: Date,
+
+      /* =========================
+         CONSULTATION
+      ========================= */
+
+      consultationTypes: {
+        type: [String],
+        default: [],
       },
-      schedule: [
-        {
-          day: {
-            type: String,
-            enum: [
-              "Monday",
-              "Tuesday",
-              "Wednesday",
-              "Thursday",
-              "Friday",
-              "Saturday",
-              "Sunday",
-            ],
-          },
-          startTime: {
-            type: String,
-          },
-          endTime: {
-            type: String,
-          },
+
+      consultationFee: {
+        type: Number,
+        default: 0,
+      },
+
+      calLink: {
+        type: String,
+        default: "",
+      },
+
+      /* =========================
+         AVAILABILITY
+      ========================= */
+
+      availability: {
+        isAvailableToday: {
+          type: Boolean,
+          default: true,
         },
-      ],
-    },
 
-    clinicName: {
-      type: String,
-      default: "",
-    },
+        nextSlot: {
+          type: Date,
+        },
 
-    clinicAddress: {
-      type: String,
-      default: "",
-    },
+        schedule: [
+          {
+            day: {
+              type: String,
 
-    languages: {
-      type: [String],
-      default: [],
-    },
+              enum: [
+                "Monday",
+                "Tuesday",
+                "Wednesday",
+                "Thursday",
+                "Friday",
+                "Saturday",
+                "Sunday",
+              ],
+            },
 
-    phone: {
-      type: String,
-      default: "",
-    },
-  },
-  {
-    timestamps: true,
-  }
-);
+            startTime: {
+              type: String,
+            },
 
-// Prevent model overwrite in dev (Next.js hot reload safe)
+            endTime: {
+              type: String,
+            },
+          },
+        ],
+      },
+
+      /* =========================
+         CLINIC
+      ========================= */
+
+      clinicName: {
+        type: String,
+        default: "",
+      },
+
+      clinicAddress: {
+        type: String,
+        default: "",
+      },
+
+      languages: {
+        type: [String],
+        default: [],
+      },
+    },
+    {
+      timestamps: true,
+    }
+  );
+
+/* =========================
+   INDEXES
+========================= */
+
+doctorSchema.index({
+  specialization: 1,
+  isVerified: 1,
+});
+
+doctorSchema.index({
+  name: "text",
+  clinicName: "text",
+});
+
+/* =========================
+   EXPORT MODEL
+========================= */
+
 const doctorModel =
-  mongoose.models.Doctor as Model<DoctorDocument> | undefined;
+  mongoose.models.Doctor as
+    | Model<DoctorDocument>
+    | undefined;
 
 export const DoctorModel =
-  doctorModel ?? mongoose.model<DoctorDocument>("Doctor", doctorSchema);
+  doctorModel ??
+  mongoose.model<DoctorDocument>(
+    "Doctor",
+    doctorSchema
+  );
