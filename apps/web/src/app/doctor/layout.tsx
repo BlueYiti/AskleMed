@@ -1,25 +1,20 @@
 import { ReactNode } from "react";
-
 import DoctorSidebar from "@/components/layout/doctor-sidebar";
 
-type DoctorLayoutProps = {
-  children: ReactNode;
-};
-
-const DoctorLayout = ({
+export default function DoctorLayout({
   children,
-}: DoctorLayoutProps) => {
+}: {
+  children: ReactNode;
+}) {
   return (
-    <main className="min-h-screen bg-slate-100 flex">
-      {/* Sidebar */}
+    <main className="min-h-screen bg-slate-100 md:flex">
       <DoctorSidebar />
 
-      {/* Page Content */}
-      <section className="flex-1 overflow-y-auto">
-        {children}
+      <section className="flex-1 min-w-0">
+        <div className="pt-16 md:pt-8 p-4 md:p-8">
+          {children}
+        </div>
       </section>
     </main>
   );
-};
-
-export default DoctorLayout;
+}

@@ -2,6 +2,8 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
+import Image from "next/image";
+
 import {
   LayoutDashboard,
   CalendarDays,
@@ -18,7 +20,6 @@ import {
 
 import { useState } from "react";
 import { authClient } from "@/lib/auth-client";
-import Image from "next/image";
 
 const links = [
   { label: "Dashboard", href: "/patient/dashboard", icon: LayoutDashboard },
@@ -98,12 +99,12 @@ const PatientSidebar = () => {
           {/* ✏️ UPDATED LOGO */}
           <Image
             src="/images/logo/white-logo.png"
-            alt="AskliMed Logo"
+            alt="AskleMed Logo"
             width={50}
             height={50}
           />
           <div>
-            <p className="text-xs text-blue-100">AskliMed</p>
+            <p className="text-xs text-blue-100">AskleMed</p>
             <h1 className="font-semibold text-lg">Patient Portal</h1>
           </div>
         </div>
