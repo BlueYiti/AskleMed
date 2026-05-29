@@ -97,8 +97,7 @@ const AdminSidebar = () => {
   };
 
   return (
-    <aside className="w-65 h-screen bg-linear-to-b from-slate-800 to-slate-900 rounded-r-[40px] px-6 py-8 flex flex-col text-white shadow-2xl">
-      {/* Logo */}
+    <aside className="fixed left-0 top-0 z-50 h-screen w-65 bg-linear-to-b from-slate-800 to-slate-900 rounded-r-[40px] px-6 py-8 flex flex-col text-white shadow-2xl">      {/* Logo */}
       <div className="flex items-center gap-3 mb-12 px-2">
         <Image
           src="/images/logo/white-logo.png"
