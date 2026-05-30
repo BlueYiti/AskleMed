@@ -48,13 +48,44 @@ export async function listDoctors(req: Request, res: Response) {
         specialization: doc.specialization,
         experienceYears: doc.experienceYears ?? 0,
         photoUrl: doc.photoUrl ?? "/images/default-doctor.png",
-        calLink: doc.calLink ?? "",
-        availability: doc.availability ?? { isAvailableToday: false },
+        calLink: doc.calLink ?? ""
       }))
     );
   } catch (error) {
     console.error("listDoctors error:", error);
     res.status(500).json({ error: "Failed to fetch doctors" });
+  }
+}
+
+/**
+ * GET /api/doctors/me
+ * returns logged-in doctor profile
+ */
+export async function getMyDoctor(req: Request, res: Response) {
+  try {
+    const authId = (req as any).user?.id; // from JWT middleware
+
+    if (!authId) {
+      return res.status(401).json({ error: "Unauthorized" });
+    }
+
+    const doctor = await DoctorModel.findOne({ authId })
+      .select(
+        "name email phone specialization experienceYears photoUrl bio consultationTypes consultationFee clinicName clinicAddress languages calLink isVerified createdAt updatedAt"
+      )
+      .lean();
+
+    if (!doctor) {
+      return res.status(404).json({ error: "Doctor not found" });
+    }
+
+    res.json({
+      _id: doctor._id,
+      ...doctor,
+    });
+  } catch (error) {
+    console.error("getMyDoctor error:", error);
+    res.status(500).json({ error: "Failed to fetch profile" });
   }
 }
 
@@ -91,8 +122,6 @@ export async function getDoctor(req: Request, res: Response) {
       consultationTypes: doctor.consultationTypes,
       consultationFee: doctor.consultationFee,
 
-      availability: doctor.availability,
-
       clinicName: doctor.clinicName,
       clinicAddress: doctor.clinicAddress,
 
@@ -114,41 +143,103 @@ export async function createDoctor(req: Request, res: Response) {
   try {
     const {
       name,
+      email,
       specialization,
       experienceYears,
       photoUrl,
-      availability,
       calLink,
     } = req.body;
 
-    if (!name || !specialization) {
-      return res.status(400).json({
-        error: "name and specialization are required",
-      });
+    const authId = (req as any).user?.id; // IMPORTANT
+
+    if (!authId) {
+      return res.status(401).json({ error: "Unauthorized" });
     }
 
     const doctor = await DoctorModel.create({
+      authId, // 🔥 REQUIRED FIX
       name,
+      email,
       specialization,
       experienceYears: experienceYears ?? 0,
       photoUrl: photoUrl ?? "/images/default-doctor.png",
-      availability: availability ?? {
-        isAvailableToday: true,
-      },
       calLink: calLink ?? "",
     });
 
-    res.status(201).json({
-      _id: doctor._id,
-      name: doctor.name,
-      specialization: doctor.specialization,
-      experienceYears: doctor.experienceYears,
-      photoUrl: doctor.photoUrl,
-      availability: doctor.availability,
-      calLink: doctor.calLink ?? "",
-    });
+    res.status(201).json(doctor);
   } catch (error) {
     console.error("createDoctor error:", error);
     res.status(500).json({ error: "Failed to create doctor" });
+  }
+}
+
+/**
+ * PUT /api/doctors/me
+ */
+export async function updateDoctor(
+  req: Request,
+  res: Response
+) {
+  try {
+    const authId = (req as any).user?.id;
+
+    if (!authId) {
+      return res
+        .status(401)
+        .json({ error: "Unauthorized" });
+    }
+
+    const {
+      name,
+      phone,
+      bio,
+      specialization,
+      experienceYears,
+      consultationTypes,
+      consultationFee,
+      clinicName,
+      clinicAddress,
+      languages,
+      calLink,
+    } = req.body;
+
+    const doctor =
+      await DoctorModel.findOneAndUpdate(
+        { authId },
+        {
+          name,
+          phone,
+          bio,
+          specialization,
+          experienceYears,
+          consultationTypes,
+          consultationFee,
+          clinicName,
+          clinicAddress,
+          languages,
+          calLink,
+        },
+        {
+          new: true,
+          runValidators: true,
+        }
+      );
+
+    if (!doctor) {
+      return res
+        .status(404)
+        .json({ error: "Doctor not found" });
+    }
+
+    res.json(doctor);
+  } catch (error) {
+    console.error(
+      "updateDoctor error:",
+      error
+    );
+
+    res.status(500).json({
+      error: "Failed to update profile",
+    });
   }
 }

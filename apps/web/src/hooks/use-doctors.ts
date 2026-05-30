@@ -12,7 +12,9 @@ export const useDoctors = (filters: DoctorFilters) => {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const fetchDoctors = async () => {
+    const controller = new AbortController();
+
+    const timeout = setTimeout(async () => {
       try {
         setLoading(true);
         setError(null);
@@ -28,7 +30,8 @@ export const useDoctors = (filters: DoctorFilters) => {
         }
 
         const res = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL}/api/doctors?${params.toString()}`
+          `${process.env.NEXT_PUBLIC_API_URL}/api/doctors?${params.toString()}`,
+          { signal: controller.signal }
         );
 
         if (!res.ok) {
@@ -36,22 +39,23 @@ export const useDoctors = (filters: DoctorFilters) => {
         }
 
         const data = await res.json();
-
         setDoctors(data);
-      } catch (err: any) {
-        console.error(err);
-        setError(err.message || "Something went wrong");
+      } catch (err) {
+        if ((err as any)?.name === "AbortError") return;
+
+        setError(
+          err instanceof Error ? err.message : "Something went wrong"
+        );
       } finally {
         setLoading(false);
       }
+    }, 300);
+
+    return () => {
+      clearTimeout(timeout);
+      controller.abort();
     };
-
-    const timeout = setTimeout(() => {
-      fetchDoctors();
-    }, 300); // debounce
-
-    return () => clearTimeout(timeout);
-  }, [filters.search, filters.specialization]);
+  }, [filters]);
 
   return {
     doctors,

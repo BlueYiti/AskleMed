@@ -1,98 +1,95 @@
 // apps/api/src/modules/auth/auth.controller.ts
 
-import type { Request, Response } from 'express'
-import { fromNodeHeaders } from 'better-auth/node'
+import type { Request, Response } from "express";
+import { fromNodeHeaders } from "better-auth/node";
 
-import { auth } from '../../lib/auth.js'
+import { auth } from "../../lib/auth.js";
 
 import {
   UserModel,
   type UserRole,
-} from '../users/user.model.js'
+} from "../users/user.model.js";
 
-import { PatientModel } from '../patients/patient.model.js'
-import { PatientProfileModel } from '../patient-profile/patient-profile.model.js'
-import { DoctorModel } from '../doctors/doctor.model.js'
+import { PatientModel } from "../patients/patient.model.js";
+import { PatientProfileModel } from "../patient-profile/patient-profile.model.js";
+import { DoctorModel } from "../doctors/doctor.model.js";
+
+/* =====================================================
+   CONFIG
+===================================================== */
 
 const allowedRoles = new Set<UserRole>([
-  'patient',
-  'doctor',
-  'admin',
-])
+  "patient",
+  "doctor",
+  "admin",
+]);
 
 type AuthApiResult<T> = {
-  headers?: Headers
-  response: T
-  status?: number
-}
+  headers?: Headers;
+  response: T;
+  status?: number;
+};
 
 type AuthUser = {
-  id: string
-  email: string
-  name: string
-  image?: string | null
-  emailVerified: boolean
-  role?: UserRole
-}
+  id: string;
+  email: string;
+  name: string;
+  image?: string | null;
+  emailVerified: boolean;
+  role?: UserRole;
+};
 
 type RegisterBody = {
-  name: string
-  email: string
-  password: string
-  role?: UserRole
+  name: string;
+  email: string;
+  password: string;
+  role?: UserRole;
 
   // Patient
-  phone?: string
-  dateOfBirth?: string
-  insuranceProvider?: string
+  phone?: string;
+  dateOfBirth?: string;
+  insuranceProvider?: string;
 
   // Doctor
-  specialization?: string
-  licenseNumber?: string
-  hospital?: string
-  yearsOfExperience?: number
-}
+  specialization?: string;
+  licenseNumber?: string;
+  hospital?: string;
+  yearsOfExperience?: number;
+};
+
+/* =====================================================
+   HELPERS
+===================================================== */
 
 function roleOrDefault(role: unknown): UserRole {
-  return typeof role === 'string' &&
+  return typeof role === "string" &&
     allowedRoles.has(role as UserRole)
     ? (role as UserRole)
-    : 'patient'
+    : "patient";
 }
 
-function applyAuthHeaders(
-  res: Response,
-  headers?: Headers,
-) {
-  if (!headers) {
-    return
-  }
+function applyAuthHeaders(res: Response, headers?: Headers) {
+  if (!headers) return;
 
   const getSetCookie = (
-    headers as Headers & {
-      getSetCookie?: () => string[]
-    }
-  ).getSetCookie
+    headers as Headers & { getSetCookie?: () => string[] }
+  ).getSetCookie;
 
   const setCookies =
-    typeof getSetCookie === 'function'
+    typeof getSetCookie === "function"
       ? getSetCookie.call(headers)
-      : []
+      : [];
 
   for (const cookie of setCookies) {
-    res.append('Set-Cookie', cookie)
+    res.append("Set-Cookie", cookie);
   }
 
   headers.forEach((value, key) => {
-    if (
-      key.toLowerCase() === 'set-cookie' &&
-      setCookies.length > 0
-    ) {
-      return
+    if (key.toLowerCase() === "set-cookie" && setCookies.length > 0) {
+      return;
     }
-
-    res.setHeader(key, value)
-  })
+    res.setHeader(key, value);
+  });
 }
 
 function toPublicUser(user: AuthUser) {
@@ -103,32 +100,27 @@ function toPublicUser(user: AuthUser) {
     role: roleOrDefault(user.role),
     image: user.image ?? null,
     emailVerified: user.emailVerified,
-  }
+  };
 }
 
-function sendAuthError(
-  res: Response,
-  error: unknown,
-) {
+function sendAuthError(res: Response, error: unknown) {
   const status =
-    typeof error === 'object' &&
+    typeof error === "object" &&
     error !== null &&
-    'statusCode' in error &&
-    typeof error.statusCode === 'number'
-      ? error.statusCode
-      : 500
+    "statusCode" in error &&
+    typeof (error as any).statusCode === "number"
+      ? (error as any).statusCode
+      : 500;
 
   const message =
-    typeof error === 'object' &&
+    typeof error === "object" &&
     error !== null &&
-    'message' in error &&
-    typeof error.message === 'string'
-      ? error.message
-      : 'Authentication failed'
+    "message" in error &&
+    typeof (error as any).message === "string"
+      ? (error as any).message
+      : "Authentication failed";
 
-  return res.status(status).json({
-    error: message,
-  })
+  return res.status(status).json({ error: message });
 }
 
 /* =====================================================
@@ -137,7 +129,7 @@ function sendAuthError(
 
 export async function register(
   req: Request<{}, {}, RegisterBody>,
-  res: Response,
+  res: Response
 ) {
   try {
     const {
@@ -146,139 +138,110 @@ export async function register(
       password,
       role,
 
-      // Patient
+      // patient
       phone,
       dateOfBirth,
       insuranceProvider,
 
-      // Doctor
+      // doctor
       specialization,
       licenseNumber,
       hospital,
       yearsOfExperience,
-    } = req.body
+    } = req.body;
 
     if (!name || !email || !password) {
       return res.status(400).json({
-        error:
-          'name, email, and password are required',
-      })
+        error: "name, email, and password are required",
+      });
     }
+
+    /* =========================
+       SOURCE OF TRUTH (FIX)
+    ========================= */
+    const userRole = roleOrDefault(role);
 
     /* =========================
        CREATE AUTH USER
     ========================= */
 
-    const authResult =
-      (await auth.api.signUpEmail({
-        body: {
-          name,
-          email,
-          password,
-          role: roleOrDefault(role),
-        },
+    const authResult = (await auth.api.signUpEmail({
+      body: {
+        name,
+        email,
+        password,
+        role: userRole,
+      },
+      headers: fromNodeHeaders(req.headers),
+      returnHeaders: true,
+      returnStatus: true,
+    } as any)) as unknown as AuthApiResult<{
+      token: string | null;
+      user: AuthUser;
+    }>;
 
-        headers: fromNodeHeaders(req.headers),
+    applyAuthHeaders(res, authResult.headers);
 
-        returnHeaders: true,
-        returnStatus: true,
-      } as any)) as unknown as AuthApiResult<{
-        token: string | null
-        user: AuthUser
-      }>
-
-    applyAuthHeaders(res, authResult.headers)
-
-    const authUser = authResult.response.user
+    const authUser = authResult.response.user;
 
     /* =========================
        CREATE INTERNAL USER
     ========================= */
 
     await UserModel.findOneAndUpdate(
+      { authId: authUser.id },
       {
         authId: authUser.id,
-      },
-      {
-        authId: authUser.id,
-
         email: authUser.email,
         name: authUser.name,
-
-        role: roleOrDefault(authUser.role),
-
-        avatar:
-          authUser.image ?? undefined,
-
-        isVerified:
-          authUser.emailVerified,
-
+        role: userRole,
+        avatar: authUser.image ?? undefined,
+        isVerified: authUser.emailVerified,
         isActive: true,
       },
       {
         upsert: true,
-        returnDocument: 'after',
+        new: true,
         setDefaultsOnInsert: true,
-      },
-    )
-
-    const userRole =
-      roleOrDefault(authUser.role);
+      }
+    );
 
     /* =========================
-      PATIENT
+       PATIENT DOMAIN
     ========================= */
 
     if (userRole === "patient") {
-      const patient =
-        await PatientModel.findOneAndUpdate(
-          {
-            authId: authUser.id,
-          },
-          {
-            authId: authUser.id,
-
-            name: authUser.name,
-            email: authUser.email,
-
-            phone: phone ?? "",
-            dateOfBirth:
-              dateOfBirth ?? null,
-
-            insuranceProvider:
-              insuranceProvider ?? "",
-          },
-          {
-            upsert: true,
-            returnDocument: "after",
-            setDefaultsOnInsert: true,
-          },
-        );
+      const patient = await PatientModel.findOneAndUpdate(
+        { authId: authUser.id },
+        {
+          authId: authUser.id,
+          name: authUser.name,
+          email: authUser.email,
+          phone: phone ?? "",
+          dateOfBirth: dateOfBirth ?? null,
+          insuranceProvider: insuranceProvider ?? "",
+        },
+        {
+          upsert: true,
+          new: true,
+          setDefaultsOnInsert: true,
+        }
+      );
 
       if (!patient?._id) {
-        throw new Error(
-          "Failed to create patient",
-        );
+        throw new Error("Failed to create patient");
       }
 
       await PatientProfileModel.findOneAndUpdate(
+        { patientId: patient._id },
         {
           patientId: patient._id,
-        },
-        {
-          patientId: patient._id,
-
           basicInfo: {
             firstName: authUser.name,
-
             email: authUser.email,
-
             phone: phone ?? "",
-
-            dateOfBirth:
-              dateOfBirth ?? null,
+            dateOfBirth: dateOfBirth ?? null,
           },
-
           healthInfo: {
             conditions: [],
             medications: [],
@@ -286,7 +249,6 @@ export async function register(
             surgeries: [],
             familyHistory: [],
           },
-
           emergencyContact: {
             name: "",
             phone: "",
@@ -295,60 +257,44 @@ export async function register(
         },
         {
           upsert: true,
-          returnDocument: "after",
+          new: true,
           setDefaultsOnInsert: true,
-        },
+        }
       );
     }
 
     /* =========================
-      DOCTOR
+       DOCTOR DOMAIN
     ========================= */
 
-    if (userRole === "doctor") {
+    else if (userRole === "doctor") {
       await DoctorModel.findOneAndUpdate(
+        { authId: authUser.id },
         {
           authId: authUser.id,
-        },
-        {
-          authId: authUser.id,
-
           name: authUser.name,
           email: authUser.email,
-
           phone: phone ?? "",
-
-          specialization:
-            specialization ?? "",
-
-          licenseNumber:
-            licenseNumber ?? "",
-
-          clinicName:
-            hospital ?? "",
-
-          experienceYears:
-            yearsOfExperience ?? 0,
+          specialization: specialization ?? "",
+          licenseNumber: licenseNumber ?? "",
+          clinicName: hospital ?? "",
+          experienceYears: yearsOfExperience ?? 0,
         },
         {
           upsert: true,
-          returnDocument: "after",
+          new: true,
           setDefaultsOnInsert: true,
-        },
+        }
       );
     }
 
     return res.status(201).json({
       token: authResult.response.token,
-
-      user: toPublicUser(
-        authResult.response.user,
-      ),
-    })
+      user: toPublicUser(authUser),
+    });
   } catch (error) {
-    console.error(error)
-
-    return sendAuthError(res, error)
+    console.error(error);
+    return sendAuthError(res, error);
   }
 }
 
@@ -356,74 +302,47 @@ export async function register(
    LOGIN
 ===================================================== */
 
-export async function login(
-  req: Request,
-  res: Response,
-) {
+export async function login(req: Request, res: Response) {
   try {
-    const {
-      email,
-      password,
-      rememberMe,
-    } = req.body
+    const { email, password, rememberMe } = req.body;
 
     if (!email || !password) {
       return res.status(400).json({
-        error:
-          'email and password are required',
-      })
+        error: "email and password are required",
+      });
     }
 
-    const authResult =
-      (await auth.api.signInEmail({
-        body: {
-          email,
-          password,
-          rememberMe:
-            rememberMe ?? true,
-        },
+    const authResult = (await auth.api.signInEmail({
+      body: {
+        email,
+        password,
+        rememberMe: rememberMe ?? true,
+      },
+      headers: fromNodeHeaders(req.headers),
+      returnHeaders: true,
+      returnStatus: true,
+    } as any)) as unknown as AuthApiResult<{
+      token: string;
+      user: AuthUser;
+    }>;
 
-        headers: fromNodeHeaders(
-          req.headers,
-        ),
+    applyAuthHeaders(res, authResult.headers);
 
-        returnHeaders: true,
-        returnStatus: true,
-      } as any)) as unknown as AuthApiResult<{
-        redirect: boolean
-        token: string
-        url?: string
-        user: AuthUser
-      }>
-
-    const profile =
-      await UserModel.findOne({
-        authId:
-          authResult.response.user.id,
-      }).lean()
-
-    applyAuthHeaders(
-      res,
-      authResult.headers,
-    )
+    const profile = await UserModel.findOne({
+      authId: authResult.response.user.id,
+    }).lean();
 
     return res.json({
       token: authResult.response.token,
-
       user: {
-        ...toPublicUser(
-          authResult.response.user,
-        ),
-
+        ...toPublicUser(authResult.response.user),
         role:
           profile?.role ??
-          roleOrDefault(
-            authResult.response.user.role,
-          ),
+          roleOrDefault(authResult.response.user.role),
       },
-    })
+    });
   } catch (error) {
-    return sendAuthError(res, error)
+    return sendAuthError(res, error);
   }
 }
 
@@ -431,46 +350,30 @@ export async function login(
    ME
 ===================================================== */
 
-export async function me(
-  req: Request,
-  res: Response,
-) {
+export async function me(req: Request, res: Response) {
   try {
-    const session =
-      await auth.api.getSession({
-        headers: fromNodeHeaders(
-          req.headers,
-        ),
-      })
+    const session = await auth.api.getSession({
+      headers: fromNodeHeaders(req.headers),
+    });
 
     if (!session) {
-      return res.status(401).json({
-        error: 'Unauthorized',
-      })
+      return res.status(401).json({ error: "Unauthorized" });
     }
 
-    const profile =
-      await UserModel.findOne({
-        authId: session.user.id,
-      }).lean()
+    const profile = await UserModel.findOne({
+      authId: session.user.id,
+    }).lean();
 
     return res.json({
       user: {
-        ...toPublicUser(
-          session.user as AuthUser,
-        ),
-
+        ...toPublicUser(session.user as AuthUser),
         role:
           profile?.role ??
-          roleOrDefault(
-            (session.user as AuthUser)
-              .role,
-          ),
+          roleOrDefault((session.user as AuthUser).role),
       },
-
       session: session.session,
-    })
+    });
   } catch (error) {
-    return sendAuthError(res, error)
+    return sendAuthError(res, error);
   }
 }

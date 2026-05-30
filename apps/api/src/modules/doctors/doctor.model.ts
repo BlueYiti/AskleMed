@@ -31,26 +31,6 @@ export interface DoctorDocument
 
   consultationFee?: number;
 
-  availability: {
-    isAvailableToday: boolean;
-
-    nextSlot?: Date;
-
-    schedule?: {
-      day:
-        | "Monday"
-        | "Tuesday"
-        | "Wednesday"
-        | "Thursday"
-        | "Friday"
-        | "Saturday"
-        | "Sunday";
-
-      startTime: string;
-      endTime: string;
-    }[];
-  };
-
   clinicName?: string;
 
   clinicAddress?: string;
@@ -159,47 +139,6 @@ const doctorSchema =
       calLink: {
         type: String,
         default: "",
-      },
-
-      /* =========================
-         AVAILABILITY
-      ========================= */
-
-      availability: {
-        isAvailableToday: {
-          type: Boolean,
-          default: true,
-        },
-
-        nextSlot: {
-          type: Date,
-        },
-
-        schedule: [
-          {
-            day: {
-              type: String,
-
-              enum: [
-                "Monday",
-                "Tuesday",
-                "Wednesday",
-                "Thursday",
-                "Friday",
-                "Saturday",
-                "Sunday",
-              ],
-            },
-
-            startTime: {
-              type: String,
-            },
-
-            endTime: {
-              type: String,
-            },
-          },
-        ],
       },
 
       /* =========================

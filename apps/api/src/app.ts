@@ -48,7 +48,7 @@ app.use('/api/ai', aiRoutes)
 app.use('/api/doctors', doctorRoutes)
 app.use('/api/appointments', appointmentRoutes)
 app.use('/api/patients', patientRoutes)
-app.use("/patient-profile", patientProfileRoutes);
+app.use("/api/patient-profile", patientProfileRoutes);
 app.use('/api/users', userRoutes)
 app.use('/api/medical-records', medicalRecordRoutes)
 
