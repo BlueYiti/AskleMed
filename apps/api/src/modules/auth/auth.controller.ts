@@ -2,6 +2,7 @@
 
 import type { Request, Response } from "express";
 import { fromNodeHeaders } from "better-auth/node";
+import { connectDB } from "../../config/db.js";
 
 import { auth } from "../../lib/auth.js";
 
@@ -132,6 +133,8 @@ export async function register(
   res: Response
 ) {
   try {
+    await connectDB();
+    
     const {
       name,
       email,
