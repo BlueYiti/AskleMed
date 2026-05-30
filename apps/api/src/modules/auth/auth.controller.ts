@@ -341,7 +341,6 @@ export async function login(req: Request, res: Response) {
     }).lean();
 
     return res.json({
-      token: authResult.response.token,
       user: {
         ...toPublicUser(authResult.response.user),
         role:
@@ -361,7 +360,7 @@ export async function login(req: Request, res: Response) {
 export async function me(req: Request, res: Response) {
   try {
     await connectDB();
-    
+
     const session = await auth.api.getSession({
       headers: fromNodeHeaders(req.headers),
     });

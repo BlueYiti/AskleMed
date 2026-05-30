@@ -45,8 +45,9 @@ export const auth = betterAuth({
   },
 
   trustedOrigins: [
-    'http://localhost:3000',
-    'https://askle-med-web.vercel.app',
+    "http://localhost:3000",
+    "https://askle-med-web.vercel.app",
+    "https://askle-med-api.vercel.app",
   ],
 
   databaseHooks: {
@@ -144,7 +145,7 @@ export const auth = betterAuth({
       update: {
         async after(user) {
           await connectDB();
-          
+
           if (!user?.id) return
 
           await UserModel.findOneAndUpdate(
