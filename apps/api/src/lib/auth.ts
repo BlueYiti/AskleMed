@@ -44,6 +44,13 @@ export const auth = betterAuth({
     },
   },
 
+  cookies: {
+    sessionToken: {
+      sameSite: "none",
+      secure: true,
+    },
+  },
+
   trustedOrigins: [
     "http://localhost:3000",
     "https://askle-med-web.vercel.app",
