@@ -5,7 +5,7 @@ import Image from "next/image";
 
 const LoginPage = () => {
   return (
-    <main className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-100 via-white to-slate-200 p-6">
+    <main className="min-h-screen flex items-center justify-center bg-linear-to-br from-slate-100 via-white to-slate-200 p-6">
       <div className="w-full max-w-5xl grid md:grid-cols-2 gap-8 items-center">
         
         {/* LEFT SIDE (Branding) */}
