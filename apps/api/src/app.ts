@@ -17,26 +17,28 @@ import webhookRoutes from './modules/webhooks/webhook.routes.js'
 import aiRoutes from './modules/ai/ai.route.js'
 
 import errorHandler from './middleware/error-handler.js'
+import { env } from './config/env.js'
 
 const app = express()
 
 const allowedOrigins = [
   'http://localhost:3000',
-  process.env.CLIENT_URL,
+  env.CLIENT_URL
 ];
 
-app.use(
-  cors({
-    origin: (origin, callback) => {
-      if (!origin || allowedOrigins.includes(origin)) {
-        callback(null, true);
-      } else {
-        callback(new Error('Not allowed by CORS'));
-      }
-    },
-    credentials: true,
-  })
-);
+app.use(cors({
+  origin: (origin, callback) => {
+    if (!origin) return callback(null, true);
+
+    if (allowedOrigins.includes(origin)) {
+      return callback(null, true);
+    }
+
+    console.log('❌ Blocked CORS origin:', origin);
+    return callback(new Error('Not allowed by CORS'));
+  },
+  credentials: true,
+}));
 
 app.use(express.json())
 app.use(express.urlencoded({ extended: true }))
