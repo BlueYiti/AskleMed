@@ -7,7 +7,6 @@ import { getProfile, updateProfile } from "@/lib/api";
 import BasicInfoSection from "@/components/patient/profile/basic-info-section";
 import HealthInfoSection from "@/components/patient/profile/health-info-section";
 import ConsentSection from "@/components/patient/profile/consent-section";
-import ProfileActions from "@/components/patient/profile/profile-actions";
 
 export default function ProfilePage() {
   const [form, setForm] = useState<any>(null);
@@ -68,12 +67,12 @@ export default function ProfilePage() {
         <div className="lg:col-span-2 space-y-6">
           <BasicInfoSection
             value={form.basicInfo}
-            onChange={(v) => updateSection("basicInfo", v)}
+            onChange={(v: any) => updateSection("basicInfo", v)}
           />
 
           <HealthInfoSection
             value={form.healthInfo}
-            onChange={(v) => updateSection("healthInfo", v)}
+            onChange={(v: any) => updateSection("healthInfo", v)}
           />
         </div>
 
@@ -81,7 +80,7 @@ export default function ProfilePage() {
         <div className="space-y-6">
           <ConsentSection
             value={form.consent}
-            onChange={(v) => updateSection("consent", v)}
+            onChange={(v: any) => updateSection("consent", v)}
           />
 
           {/* SUMMARY CARD */}

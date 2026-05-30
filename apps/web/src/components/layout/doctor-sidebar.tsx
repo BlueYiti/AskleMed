@@ -5,7 +5,6 @@ import { usePathname, useRouter } from "next/navigation";
 import Image from "next/image";
 
 import {
-  LayoutDashboard,
   CalendarDays,
   Stethoscope,
   Users,
@@ -22,7 +21,6 @@ import { useState } from "react";
 import { authClient } from "@/lib/auth-client";
 
 const links = [
-  { label: "Dashboard", href: "/doctor/dashboard", icon: LayoutDashboard },
   { label: "Appointments", href: "/doctor/appointments", icon: CalendarDays },
   { label: "Consultations", href: "/doctor/consultation", icon: Stethoscope },
   { label: "Patients", href: "/doctor/patients", icon: Users },

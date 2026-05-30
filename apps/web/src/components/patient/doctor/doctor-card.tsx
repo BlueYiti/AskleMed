@@ -11,8 +11,6 @@ interface Props {
 }
 
 const DoctorCard = ({ doctor }: Props) => {
-  const isAvailable = doctor.availability?.isAvailableToday;
-
   return (
     <Card className="p-4 transition-all hover:shadow-md hover:-translate-y-0.5">
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
@@ -40,18 +38,6 @@ const DoctorCard = ({ doctor }: Props) => {
 
         {/* RIGHT SECTION */}
         <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 md:shrink-0">
-          
-          <span
-            className={[
-              "text-xs px-2 py-1 rounded-full font-medium whitespace-nowrap w-fit",
-              isAvailable
-                ? "bg-green-100 text-green-700"
-                : "bg-gray-100 text-gray-500",
-            ].join(" ")}
-          >
-            {isAvailable ? "Available Today" : "Unavailable"}
-          </span>
-
           <Link href={`/patient/doctors/${doctor._id}`}>
             <Button size="sm" className="w-full sm:w-auto">
               View Profile

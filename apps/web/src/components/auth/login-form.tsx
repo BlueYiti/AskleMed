@@ -68,7 +68,7 @@ const LoginForm = () => {
           break;
 
         case "doctor":
-          router.push("/doctor/dashboard");
+          router.push("/doctor/appointments");
           break;
 
         case "admin":

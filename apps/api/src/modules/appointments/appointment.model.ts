@@ -1,6 +1,8 @@
-﻿import mongoose, { type Document } from 'mongoose'
+﻿import mongoose, { type Document, type Model, Schema } from 'mongoose'
 
 export interface AppointmentDocument extends Document {
+  patientId?: mongoose.Types.ObjectId | null
+
   patientName: string
   patientEmail: string
 
@@ -10,7 +12,7 @@ export interface AppointmentDocument extends Document {
   startsAt: Date
   endsAt: Date
 
-  status: 'pending' | 'confirmed' | 'completed' | 'cancelled'
+  status: 'pending' | 'confirmed' | 'completed' | 'cancelled' | 'rescheduled' | 'rejected'
 
   calEventId?: string
   meetingLink?: string
@@ -20,43 +22,26 @@ export interface AppointmentDocument extends Document {
   updatedAt: Date
 }
 
-const appointmentSchema = new mongoose.Schema<AppointmentDocument>(
+const appointmentSchema = new Schema<AppointmentDocument>(
   {
-    patientName: {
-      type: String,
-      required: true,
+    patientId: {
+      type: Schema.Types.ObjectId,
+      ref: 'Patient',
+      default: null,
     },
 
-    patientEmail: {
-      type: String,
-      required: true,
-    },
+    patientName: { type: String, required: true },
+    patientEmail: { type: String, required: true },
 
-    doctorEmail: {
-      type: String,
-      required: true,
-      index: true,
-    },
+    doctorEmail: { type: String, required: true, index: true },
+    doctorName: { type: String, required: true },
 
-    doctorName: {
-      type: String,
-      required: true,
-    },
-
-    startsAt: {
-      type: Date,
-      required: true,
-      index: true,
-    },
-
-    endsAt: {
-      type: Date,
-      required: true,
-    },
+    startsAt: { type: Date, required: true, index: true },
+    endsAt: { type: Date, required: true },
 
     status: {
       type: String,
-      enum: ['pending', 'confirmed', 'completed', 'cancelled'],
+      enum: ['pending', 'confirmed', 'completed', 'cancelled', 'rescheduled', 'rejected'],
       default: 'confirmed',
     },
 
@@ -66,23 +51,14 @@ const appointmentSchema = new mongoose.Schema<AppointmentDocument>(
       sparse: true,
     },
 
-    meetingLink: {
-      type: String,
-    },
+    meetingLink: { type: String },
 
-    reason: {
-      type: String,
-      default: '',
-    },
+    reason: { type: String, default: '' },
   },
-  {
-    timestamps: true,
-  },
+  { timestamps: true }
 )
 
-export const AppointmentModel =
-  mongoose.models.Appointment ||
-  mongoose.model<AppointmentDocument>(
-    'Appointment',
-    appointmentSchema,
-  )
+// ✅ FIX: proper model typing (THIS prevents TS overload bugs)
+export const AppointmentModel: Model<AppointmentDocument> =
+  (mongoose.models.Appointment as Model<AppointmentDocument>) ||
+  mongoose.model<AppointmentDocument>('Appointment', appointmentSchema)
