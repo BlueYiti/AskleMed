@@ -34,7 +34,7 @@ AskleMed is a telehealth web application MVP that allows patients to register, d
 
 ### Deployment
 
-- Docker
+- Vercel
 
 ## Project Structure
 
