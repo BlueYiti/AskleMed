@@ -3,6 +3,7 @@ import cors from 'cors'
 
 import { toNodeHandler } from 'better-auth/node'
 import { auth } from './lib/auth.js'
+import { ensureDatabase } from "./middleware/db.middleware.js";
 
 import authRoutes from './modules/auth/auth.routes.js'
 import doctorRoutes from './modules/doctors/doctor.routes.js'
@@ -42,6 +43,7 @@ app.use(cors({
 
 app.use(express.json())
 app.use(express.urlencoded({ extended: true }))
+app.use(ensureDatabase);
 
 app.get('/health', (_req, res) => {
   res.status(200).json({

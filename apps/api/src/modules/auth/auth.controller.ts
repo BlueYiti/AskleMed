@@ -2,6 +2,8 @@
 
 import type { Request, Response } from "express";
 import { fromNodeHeaders } from "better-auth/node";
+
+import mongoose from "mongoose";
 import { connectDB } from "../../config/db.js";
 
 import { auth } from "../../lib/auth.js";
@@ -308,6 +310,9 @@ export async function register(
 export async function login(req: Request, res: Response) {
   try {
     const { email, password, rememberMe } = req.body;
+    await connectDB();
+
+    console.log("Mongo ready:", mongoose.connection.readyState);
 
     if (!email || !password) {
       return res.status(400).json({
@@ -355,6 +360,8 @@ export async function login(req: Request, res: Response) {
 
 export async function me(req: Request, res: Response) {
   try {
+    await connectDB();
+    
     const session = await auth.api.getSession({
       headers: fromNodeHeaders(req.headers),
     });

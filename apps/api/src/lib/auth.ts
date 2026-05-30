@@ -2,7 +2,7 @@ import { betterAuth } from 'better-auth'
 import { mongodbAdapter } from 'better-auth/adapters/mongodb'
 import { z } from 'zod'
 
-import { client } from '../config/db.js'
+import { client, connectDB } from "../config/db.js";
 import { env } from '../config/env.js'
 
 import { UserModel } from '../modules/users/user.model.js'
@@ -53,6 +53,8 @@ export const auth = betterAuth({
     user: {
       create: {
         async after(user) {
+          await connectDB();
+          
           if (!user?.id) {
             throw new Error('Missing auth user id')
           }
@@ -141,6 +143,8 @@ export const auth = betterAuth({
 
       update: {
         async after(user) {
+          await connectDB();
+          
           if (!user?.id) return
 
           await UserModel.findOneAndUpdate(
