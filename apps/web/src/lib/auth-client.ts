@@ -4,7 +4,11 @@ import { usernameClient } from "better-auth/client/plugins";
 export const authClient = createAuthClient({
   baseURL: process.env.NEXT_PUBLIC_API_URL,
 
-  plugins: [
-    usernameClient(),
-  ],
+  fetchOptions: {
+    credentials: "include",
+  },
+
+  plugins: [usernameClient()],
 });
+
+console.log("🌐 Auth baseURL:", process.env.NEXT_PUBLIC_API_URL);

@@ -41,50 +41,65 @@ const LoginForm = () => {
     setIsLoading(true);
     setError("");
 
+    console.log("🚀 Login attempt started");
+    console.log("📦 Form data:", formData);
+
     try {
-      const { data, error } =
-        await authClient.signIn.email({
-          email: formData.email,
-          password: formData.password,
-        });
+      const res = await authClient.signIn.email({
+        email: formData.email,
+        password: formData.password,
+      });
+
+      console.log("📡 Full auth response:", res);
+
+      const { data, error } = res;
 
       if (error) {
+        console.error("❌ Auth error:", error);
         setError(error.message || "Invalid email or password.");
         return;
       }
 
-      // 👇 get user role from response
+      console.log("✅ Auth success data:", data);
+      console.log("👤 User object:", data?.user);
+
       const role = (data?.user as any)?.role;
 
+      console.log("🎭 Extracted role:", role);
+
       if (!role) {
+        console.error("⚠️ Role missing from user object!");
         setError("User role not found.");
         return;
       }
 
-      // 👇 role-based redirection
+      let targetRoute = "/";
+
       switch (role) {
         case "patient":
-          router.push("/patient/dashboard");
+          targetRoute = "/patient/dashboard";
           break;
-
         case "doctor":
-          router.push("/doctor/appointments");
+          targetRoute = "/doctor/appointments";
           break;
-
         case "admin":
-          router.push("/admin/dashboard");
-          break;
-
-        default:
-          router.push("/");
+          targetRoute = "/admin/dashboard";
           break;
       }
 
+      console.log("🔁 Redirecting to:", targetRoute);
+
+      router.push(targetRoute);
+
+      console.log("🔄 Calling router.refresh()");
       router.refresh();
+
     } catch (err) {
+      console.error("🔥 Unexpected login error:", err);
       setError("Something went wrong. Please try again.");
     } finally {
       setIsLoading(false);
+      console.log("🏁 Login flow finished");
     }
   };
 
