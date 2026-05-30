@@ -1,5 +1,6 @@
 ﻿import type { Request, Response } from 'express'
 import { MedicalRecordModel } from './medical-record.model.js'
+import mongoose from 'mongoose'
 
 /* =========================
    CREATE MEDICAL RECORD
@@ -83,8 +84,24 @@ export const getMedicalRecordsByPatient = async (
   res: Response,
 ) => {
   try {
+    const { patientId } = req.params
+
+    if (!patientId || Array.isArray(patientId)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid patientId',
+      })
+    }
+
+    if (!mongoose.Types.ObjectId.isValid(patientId)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid patientId format',
+      })
+    }
+
     const records = await MedicalRecordModel.find({
-      patient: req.params.patientId,
+      patient: new mongoose.Types.ObjectId(patientId),
     })
       .populate('doctor')
       .sort({ createdAt: -1 })
