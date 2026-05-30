@@ -258,6 +258,33 @@ export async function getAppointmentById(
 }
 
 /**
+ * GET COMPLETED APPOINTMENTS
+ */
+export const getCompletedAppointments = async (
+  req: Request,
+  res: Response
+) => {
+  if (!req.user) {
+    return res.status(401).json({
+      success: false,
+      message: 'Unauthorized',
+    })
+  }
+
+  const appointments = await AppointmentModel.find({
+    patientEmail: req.user.email,
+    status: 'completed',
+  })
+    .populate('doctor')
+    .sort({ startsAt: -1 })
+
+  return res.json({
+    success: true,
+    appointments,
+  })
+}
+
+/**
  * GET DOCTOR APPOINTMENTS
  */
 export async function getDoctorAppointments(

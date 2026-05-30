@@ -1,9 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
-import { isAfter, isBefore } from "date-fns";
-
-export type ConsultationTab = "upcoming" | "completed" | "cancelled" | "past";
+import { useEffect, useState } from "react";
 
 export interface Consultation {
   _id: string;
@@ -20,7 +17,7 @@ export interface Consultation {
     endsAt?: string;
   };
 
-  status: ConsultationTab;
+  status: "completed";
 
   documents: {
     hasPrescription: boolean;
@@ -34,49 +31,40 @@ export function useConsultations() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchData = async () => {
+    const fetchConsultations = async () => {
       try {
         const res = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL}/api/consultations/me`,
+          `${process.env.NEXT_PUBLIC_API_URL}/api/appointments/me`,
           {
-            method: "GET",
             credentials: "include",
           }
         );
 
+        if (!res.ok) {
+          throw new Error("Failed to fetch consultations");
+        }
+
         const data = await res.json();
-        setConsultations(data.consultations || []);
-      } catch (err) {
-        console.error("Failed to fetch consultations", err);
+        console.log("Fetched consultations:", data.appointments);
+
+        const completedConsultations = (data.appointments || []).filter(
+          (consultation: Consultation) =>
+            consultation.status === "completed"
+        );
+
+        setConsultations(completedConsultations);
+      } catch (error) {
+        console.error("Failed to fetch consultations:", error);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchData();
+    fetchConsultations();
   }, []);
 
-  const categorized = useMemo(() => {
-    const now = new Date();
-
-    return {
-      upcoming: consultations.filter(
-        (c) =>
-          c.status !== "cancelled" &&
-          isAfter(new Date(c.schedule.startsAt), now)
-      ),
-
-      completed: consultations.filter((c) => c.status === "completed"),
-
-      cancelled: consultations.filter((c) => c.status === "cancelled"),
-
-      past: consultations.filter(
-        (c) =>
-          c.status !== "cancelled" &&
-          isBefore(new Date(c.schedule.endsAt || c.schedule.startsAt), now)
-      ),
-    };
-  }, [consultations]);
-
-  return { consultations, categorized, loading };
+  return {
+    consultations,
+    loading,
+  };
 }
