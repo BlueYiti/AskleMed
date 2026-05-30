@@ -79,10 +79,7 @@ export async function getMyDoctor(req: Request, res: Response) {
       return res.status(404).json({ error: "Doctor not found" });
     }
 
-    res.json({
-      _id: doctor._id,
-      ...doctor,
-    });
+    return res.json(doctor);
   } catch (error) {
     console.error("getMyDoctor error:", error);
     res.status(500).json({ error: "Failed to fetch profile" });
@@ -108,7 +105,7 @@ export async function getDoctor(req: Request, res: Response) {
 
     res.json({
       _id: doctor._id,
-      userId: doctor.userId,
+      userId: doctor.authId,
 
       name: doctor.name,
       calLink: doctor.calLink ?? "",

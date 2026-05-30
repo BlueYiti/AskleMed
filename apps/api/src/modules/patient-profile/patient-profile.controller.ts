@@ -97,13 +97,31 @@ export const getPatientProfileById = async (
    GET PROFILE BY PATIENT ID
 ========================= */
 
+import mongoose from 'mongoose'
+
 export const getPatientProfileByPatientId = async (
   req: Request,
   res: Response,
 ) => {
   try {
+    const { patientId } = req.params
+
+    if (!patientId || Array.isArray(patientId)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid patientId',
+      })
+    }
+
+    if (!mongoose.Types.ObjectId.isValid(patientId)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid patientId format',
+      })
+    }
+
     const profile = await PatientProfileModel.findOne({
-      patientId: req.params.patientId,
+      patientId: new mongoose.Types.ObjectId(patientId),
     }).populate('patientId')
 
     if (!profile) {
