@@ -100,7 +100,12 @@ export async function getMyAppointments(
   try {
     // ✅ Get BetterAuth session from request headers
     const session = await auth.api.getSession({
-      headers: req.headers,
+      headers: Object.fromEntries(
+        Object.entries(req.headers).map(([k, v]) => [
+          k,
+          Array.isArray(v) ? v.join(',') : v ?? '',
+        ])
+      )
     })
 
     const user = session?.user
@@ -170,7 +175,12 @@ export async function getAppointmentById(
 ) {
   try {
     const session = await auth.api.getSession({
-      headers: req.headers,
+      headers: Object.fromEntries(
+        Object.entries(req.headers).map(([k, v]) => [
+          k,
+          Array.isArray(v) ? v.join(',') : v ?? '',
+        ])
+      )
     })
 
     const user = session?.user
@@ -198,13 +208,8 @@ export async function getAppointmentById(
      * SECURITY:
      * Only owner patient OR doctor can view
      */
-    AppointmentModel.findOne({
-      _id: appointmentId,
-      $or: [
-        { patientEmail: user.email },
-        { doctorEmail: user.email }
-      ]
-    })
+    const isPatient = appointment.patientEmail === user.email
+    const isDoctor = appointment.doctorEmail === user.email
 
     if (!isPatient && !isDoctor) {
       return res.status(403).json({
@@ -261,7 +266,12 @@ export async function getDoctorAppointments(
 ) {
   try {
     const session = await auth.api.getSession({
-      headers: req.headers,
+      headers: Object.fromEntries(
+        Object.entries(req.headers).map(([k, v]) => [
+          k,
+          Array.isArray(v) ? v.join(',') : v ?? '',
+        ])
+      )
     })
 
     const user = session?.user
