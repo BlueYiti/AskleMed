@@ -1,12 +1,18 @@
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
-import { isAfter, isBefore, startOfDay } from 'date-fns'
+import { isAfter, isBefore } from 'date-fns'
 import type { Appointment } from '@/types/appointment'
 
-export type Tab = 'upcoming' | 'done' | 'cancelled' | 'past'
+export type Tab = 'today' | 'upcoming' | 'completed' | 'cancelled' | 'inProgress'
 
-export const TABS: Tab[] = ['upcoming', 'done', 'cancelled', 'past']
+export const TABS: Tab[] = [
+  'today',
+  'upcoming',
+  'inProgress',
+  'completed',
+  'cancelled',
+]
 
 export function useAppointments() {
   const [appointments, setAppointments] = useState<Appointment[]>([])
@@ -40,28 +46,49 @@ export function useAppointments() {
   const categorized = useMemo(() => {
     const now = new Date()
 
+    const today = appointments.filter((a) => {
+      const d = new Date(a.startsAt)
+      return d.toDateString() === now.toDateString()
+    })
+
+    const upcoming = appointments.filter(
+      (a) =>
+        a.status !== 'cancelled' &&
+        isAfter(new Date(a.startsAt), now)
+    )
+
+    // ❗ FIX: ONLY use real backend statuses (NO "completed" / "in_progress")
+    const completed = appointments.filter(
+      (a) => a.status === 'completed'
+    )
+
+    const cancelled = appointments.filter(
+      (a) => a.status === 'cancelled'
+    )
+
+    // UI-derived in-progress (time-based, not status-based)
+    const inProgress = appointments.filter((a) => {
+      const start = new Date(a.startsAt)
+      const end = new Date(a.endsAt)
+
+      return (
+        a.status !== 'cancelled' &&
+        isBefore(start, now) &&
+        isAfter(end, now)
+      )
+    })
+
     return {
-      upcoming: appointments.filter(
-        (a) => a.status !== 'cancelled' && isAfter(new Date(a.startsAt), now)
-      ),
-      cancelled: appointments.filter((a) => a.status === 'cancelled'),
-      done: appointments.filter(
-        (a) => a.status === 'completed' || a.status === 'done'
-      ),
-      past: appointments.filter((a) => {
-        const endsAt = new Date(a.endsAt)
-        return (
-          a.status !== 'cancelled' &&
-          a.status !== 'completed' &&
-          a.status !== 'done' &&
-          isBefore(endsAt, now)
-        )
-      }),
+      today,
+      upcoming,
+      completed,
+      cancelled,
+      inProgress,
     }
   }, [appointments])
 
   const appointmentDates = useMemo(
-    () => appointments.map((a) => startOfDay(new Date(a.startsAt))),
+    () => appointments.map((a) => new Date(a.startsAt)),
     [appointments]
   )
 

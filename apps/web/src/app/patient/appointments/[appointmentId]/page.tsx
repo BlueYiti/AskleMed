@@ -22,9 +22,9 @@ export default function AppointmentDetailsPage({ params }: PageProps) {
 
   const appointment = [
     ...categorized.upcoming,
-    ...categorized.done,
+    ...categorized.completed,
     ...categorized.cancelled,
-    ...categorized.past,
+    ...categorized.completed,
   ].find((a) => a._id === appointmentId);
 
   if (loading) {

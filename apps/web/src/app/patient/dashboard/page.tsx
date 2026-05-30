@@ -5,8 +5,7 @@ import { useEffect, useMemo, useState } from "react";
 import { authClient } from "@/lib/auth-client";
 
 import { DashboardData } from "@/types/dashboard";
-import { Appointment } from "@/types/appointment";
-import { User } from "@/types/user";
+import { Appointment } from "@/types/dashboard";
 
 import { PrescriptionRefills } from "@/components/patient/dashboard/prescription-refills";
 import { DashboardHero } from "@/components/patient/dashboard/hero";
@@ -16,7 +15,7 @@ import { dashboardGradients, dashboardIcons } from "@/components/patient/dashboa
 import { HealthTipRotator } from "@/components/patient/dashboard/health-tip-rotator";
 
 const PatientDashboardPage = () => {
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<any>(null);
 
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [medicalRecordsCount, setMedicalRecordsCount] = useState(0);

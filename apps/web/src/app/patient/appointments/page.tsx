@@ -108,7 +108,7 @@ export default function AppointmentsPage() {
 
               <SummaryCard
                 label="Completed"
-                count={categorized.done.length}
+                count={categorized.completed.length}
                 icon={<CheckCircle2 className="h-4 w-4" />}
               />
 

@@ -33,7 +33,7 @@ export function AppointmentCard({
       "bg-amber-100 text-amber-700",
     cancelled:
       "bg-red-100 text-red-700",
-    done: "bg-slate-200 text-slate-700",
+    completed: "bg-slate-200 text-slate-700",
   };
 
   return (

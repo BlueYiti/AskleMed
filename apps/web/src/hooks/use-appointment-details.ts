@@ -17,9 +17,9 @@ export function useAppointmentDetails(
 
     const allAppointments = [
       ...categorized.upcoming,
-      ...categorized.done,
+      ...categorized.completed,
       ...categorized.cancelled,
-      ...categorized.past,
+      ...categorized.completed,
     ];
 
     return allAppointments.find(

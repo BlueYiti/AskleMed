@@ -54,7 +54,7 @@ const LoginForm = () => {
       }
 
       // 👇 get user role from response
-      const role = data?.user?.role;
+      const role = (data?.user as any)?.role;
 
       if (!role) {
         setError("User role not found.");

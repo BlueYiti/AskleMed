@@ -81,30 +81,15 @@ const DoctorsFilters = ({ filters, onChange }: Props) => {
         </div>
       </div>
 
-      {/* Availability */}
-      <h3 className="text-sm font-medium">Availability</h3>
-      <Select
-        value={filters.availability}
-        onValueChange={(value) =>
-          onChange({ ...filters, availability: value })
-        }
-      >
-        <SelectTrigger>
-          <SelectValue placeholder="Availability" />
-        </SelectTrigger>
-        <SelectContent>
-          <SelectItem value="all">All</SelectItem>
-          <SelectItem value="today">Available Today</SelectItem>
-          <SelectItem value="week">This Week</SelectItem>
-        </SelectContent>
-      </Select>
-
       {/* Consultation Type */}
       <h3 className="text-sm font-medium">Consultation Type</h3>
       <Select
         value={filters.consultationType}
         onValueChange={(value) =>
-          onChange({ ...filters, consultationType: value })
+          onChange({
+            ...filters,
+            consultationType: value as "all" | "online" | "in_person",
+          })
         }
       >
         <SelectTrigger>
